@@ -1,0 +1,68 @@
+# Plugins (cloned bar & network)
+
+Omarchy first-party plugins live in the package tree. This rice **clones** two of them into your config so you can edit safely — package updates will not overwrite your copies.
+
+| Plugin id | Path | Kind | Cloned from |
+|-----------|------|------|-------------|
+| `mahmoud.bar` | `omarchy/plugins/mahmoud.bar/` | `bar` | `omarchy.bar` |
+| `mahmoud.network` | `omarchy/plugins/mahmoud.network/` | `bar-widget` | `omarchy.network` |
+
+Live under `~/.config/omarchy/plugins/…`.
+
+## Why clone?
+
+Editing `/usr/share/omarchy/...` is wiped on upgrade. `omarchy plugin clone` (already done in this repo) copies the plugin into `~/.config/omarchy/plugins/<new-id>/` with a manifest that records `omarchy.clonedFrom`.
+
+## Bar engine — `mahmoud.bar`
+
+- Entry: `Bar.qml` (declared in `manifest.json`)  
+- Widgets: `widgets/*.qml` + sibling `*.manifest.json`  
+- Indicators: `indicators/*.qml` (Dnd, NightLight, Reminder, ScreenRecording, StayAwake, Dictation, …)  
+- Logic helpers: `BarModel.js`, tray/keyboard models, etc.  
+
+`shell.json` sets `"id": "mahmoud.bar"` so the shell mounts **your** clone, not the stock bar.
+
+### When to edit QML vs shell.json
+
+| Change | Prefer |
+|--------|--------|
+| Order / which widgets | `shell.json` or `omarchy bar move` |
+| Position / transparency | `shell.json` / `omarchy bar …` |
+| Widget behavior Omarchy doesn’t expose | Edit QML under `mahmoud.bar/widgets/` |
+| Indicator set | `omarchy.indicators` settings in `shell.json` |
+
+**Caution:** `Bar.qml` is large engine code. Prefer small widget edits; keep a git copy.
+
+### Refresh after upstream Omarchy changes
+
+```bash
+omarchy plugin clone omarchy.bar
+# Then either switch shell.json bar.id to the new clone id,
+# or manually merge upstream into mahmoud.bar
+omarchy restart shell
+```
+
+## Network panel — `mahmoud.network`
+
+- `Panel.qml` + `Model.js`  
+- Manifest `id`: `mahmoud.network`  
+- Placed in `shell.json` right layout (instead of `omarchy.network`)  
+
+Safe to tweak Wi-Fi list UI / dual-stack presentation. Re-clone from `omarchy.network` if you want a fresh upstream base.
+
+```bash
+omarchy plugin clone omarchy.network
+omarchy plugin list
+omarchy restart shell
+```
+
+## General plugin commands
+
+```bash
+omarchy plugin list
+omarchy plugin enable <id>
+omarchy plugin disable <id>
+omarchy-shell shell rescanPlugins   # if available on your build
+```
+
+Third-party widgets: create `~/.config/omarchy/plugins/<id>/` with `manifest.json` declaring `kinds: ["bar-widget"]` and a `barWidget` entry point, then place the id in `shell.json`.

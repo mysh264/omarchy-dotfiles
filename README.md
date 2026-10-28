@@ -9,6 +9,9 @@
 
 Use this to clone the same desktop onto another **Omarchy** laptop **or** a plain **Arch** install — or steal the pieces you like.
 
+> **Full wiki:** every feature and how to edit it — browse [`wiki/`](wiki/Home.md) in this repo, or the GitHub Wiki at **https://github.com/mysh264/omarchy-dotfiles/wiki** (same content).
+
+
 > **Credit — Omarchy**  
 > This repository is **not** Omarchy. It is a personal / shared layer of configs that sit on top of it.  
 > **Omarchy** is created by **[David Heinemeier Hansson](https://dhh.dk/)** and the **Omarchy / Omacom** team.  
