@@ -1,0 +1,12 @@
+# Never commit secrets or machine-local junk
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+*.bak
+*.bak.*
+*~
+.DS_Store
+.local/
+*.try.lua

@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+"""CPU/GPU temperature and clocks, load, RAM, and swap for the bar."""
+
+import json
+import subprocess
+from pathlib import Path
+
+STATE = Path.home() / ".cache/omarchy/hw-stats-cpu"
+
+
+def read(path):
+    try:
+        return Path(path).read_text().strip()
+    except OSError:
+        return ""
+
+
+def cpu_package_c():
+    for hw in Path("/sys/class/hwmon").glob("hwmon*"):
+        if read(hw / "name") != "coretemp":
+            continue
+        raw = read(hw / "temp1_input")
+        if raw:
+            return int(raw) / 1000
+    return None
+
+
+def cpu_mhz():
+    vals = []
+    for node in Path("/sys/devices/system/cpu").glob("cpu[0-9]*"):
+        raw = read(node / "cpufreq/scaling_cur_freq")
+        if raw:
+            vals.append(int(raw) / 1000)
+    if not vals:
+        return None, None
+    return sum(vals) / len(vals), max(vals)
+
+
+def cpu_times():
+    parts = Path("/proc/stat").read_text().splitlines()[0].split()[1:9]
+    nums = [int(part) for part in parts]
+    return sum(nums), nums[3] + nums[4]
+
+
+def cpu_percent():
+    total, idle = cpu_times()
+    prev = None
+    try:
+        prev_total, prev_idle = STATE.read_text().split()
+        prev = (int(prev_total), int(prev_idle))
+    except (OSError, ValueError):
+        prev = None
+    STATE.parent.mkdir(parents=True, exist_ok=True)
+    STATE.write_text(f"{total} {idle}\n")
+    if not prev:
+        return None
+    delta = total - prev[0]
+    if delta <= 0:
+        return None
+    used = (delta - (idle - prev[1])) * 100 / delta
+    return max(0.0, min(100.0, used))
+
+
+def meminfo():
+    info = {}
+    for line in Path("/proc/meminfo").read_text().splitlines():
+        key, rest = line.split(":", 1)
+        info[key] = int(rest.strip().split()[0]) * 1024
+    return info
+
+
+def gib(nbytes):
+    return nbytes / (1024 ** 3)
+
+
+def fmt_pair(used, total):
+    return f"{gib(used):.1f}/{gib(total):.1f}G"
+
+
+def nvidia():
+    device = None
+    for card in Path("/sys/class/drm").glob("card[0-9]"):
+        dev = card / "device"
+        if read(dev / "vendor") == "0x10de":
+            device = dev
+            break
+    if device is None:
+        return None
+    if read(device / "power/runtime_status") == "suspended":
+        return {"asleep": True}
+    try:
+        line = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=temperature.gpu,clocks.gr,utilization.gpu",
+                "--format=csv,noheader,nounits",
+            ],
+            text=True,
+            timeout=2,
+            stderr=subprocess.DEVNULL,
+        ).strip().splitlines()[0]
+    except (subprocess.SubprocessError, OSError, IndexError):
+        return None
+    temp, clock, util = [part.strip() for part in line.split(",")]
+
+    def num(value):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+
+    return {"temp": num(temp), "mhz": num(clock), "util": num(util)}
+
+
+def deg(value):
+    return f"{round(value)}°" if value is not None else "—"
+
+
+def mhz(value):
+    return f"{round(value)}MHz" if value is not None else "—"
+
+
+def pct(value):
+    return f"{round(value)}%" if value is not None else "—"
+
+
+def main():
+    temp = cpu_package_c()
+    avg, peak = cpu_mhz()
+    busy = cpu_percent()
+    load = read("/proc/loadavg").split()
+    mem = meminfo()
+    ram_used = mem["MemTotal"] - mem["MemAvailable"]
+    swap_used = mem["SwapTotal"] - mem["SwapFree"]
+    gpu = nvidia()
+
+    cpu = f"CPU {deg(temp)} {mhz(avg)} {pct(busy)}"
+    if gpu and gpu.get("asleep"):
+        gpu_text = "GPU sleep"
+    elif gpu:
+        gpu_text = f"GPU {deg(gpu['temp'])} {mhz(gpu['mhz'])} {pct(gpu['util'])}"
+    else:
+        gpu_text = "GPU —"
+    load_text = f"load {load[0]}" if load else "load —"
+    ram_text = f"RAM {fmt_pair(ram_used, mem['MemTotal'])}"
+    swap_text = f"SWAP {fmt_pair(swap_used, mem['SwapTotal'])}"
+    text = "  ".join([cpu, gpu_text, load_text, ram_text, swap_text])
+
+    tip_lines = [
+        f"CPU {deg(temp)}C   {mhz(avg)} avg   {mhz(peak)} max   {pct(busy)}",
+        gpu_text,
+        f"Load {' '.join(load[:3])}" if load else "Load —",
+        f"RAM {gib(ram_used):.2f} / {gib(mem['MemTotal']):.2f} GiB",
+        f"Swap {gib(swap_used):.2f} / {gib(mem['SwapTotal']):.2f} GiB",
+    ]
+    print(json.dumps({"text": text, "tooltip": "\n".join(tip_lines)}))
+
+
+if __name__ == "__main__":
+    main()
