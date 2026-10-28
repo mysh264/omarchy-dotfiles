@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Install these Omarchy / Hyprland dotfiles onto an Omarchy system.
+# Install these Hyprland / Omarchy-shell user configs.
+# Works on Omarchy OS and on baseline Arch after the Omarchy stack is layered on.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -7,18 +8,25 @@ BACKUP_ROOT="${OMARCHY_DOTFILES_BACKUP:-$HOME/.config/omarchy-dotfiles-backup-$(
 DRY_RUN=0
 WITH_HY3=1
 WITH_CONKY=0
+TARGET="auto" # auto | omarchy | arch
 
 usage() {
   cat <<'EOF'
 Usage: ./install.sh [options]
 
-Install Mahmoud's Omarchy user configs into ~/.config (Hyprland + shell/bar).
+Install Mahmoud's desktop configs into ~/.config (Hyprland + Omarchy shell/bar).
+
+Targets:
+  --target auto      Detect Omarchy OS vs baseline Arch (default)
+  --target omarchy   Assume a full Omarchy install
+  --target arch      Baseline Arch that already has the Omarchy stack
+                     (run scripts/setup-arch-omarchy-stack.sh first)
 
 Options:
-  --dry-run       Print actions only
-  --skip-hy3      Do not install/enable the hy3 Hyprland plugin
-  --with-conky    Also clone lean-conky-config into ~/.config/conky
-  -h, --help      Show this help
+  --dry-run          Print actions only
+  --skip-hy3         Do not install/enable the hy3 Hyprland plugin
+  --with-conky       Also clone lean-conky-config into ~/.config/conky
+  -h, --help         Show this help
 
 Safe locations only — never writes under /usr/share/omarchy/.
 Existing files are copied to a timestamped backup under ~/.config/.
@@ -30,6 +38,14 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY_RUN=1; shift ;;
     --skip-hy3) WITH_HY3=0; shift ;;
     --with-conky) WITH_CONKY=1; shift ;;
+    --target)
+      TARGET="${2:-}"
+      shift 2
+      case "$TARGET" in auto|omarchy|arch) ;; *)
+        echo "Invalid --target: $TARGET (use auto|omarchy|arch)" >&2
+        exit 1
+      esac
+      ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -67,15 +83,56 @@ need_cmd() {
   }
 }
 
-if [[ ! -d /usr/share/omarchy ]]; then
-  echo "This does not look like an Omarchy install (/usr/share/omarchy missing)." >&2
-  echo "Install Omarchy first: https://omarchy.org" >&2
+detect_target() {
+  if [[ -d /usr/share/omarchy && -f /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    if grep -qi omarchy <<<"${NAME:-}${ID:-}${ID_LIKE:-}"; then
+      echo omarchy
+      return
+    fi
+    # Omarchy packages on plain Arch still look like this
+    if [[ -x /usr/share/omarchy/bin/omarchy-shell ]]; then
+      echo arch
+      return
+    fi
+  fi
+  if [[ -d /usr/share/omarchy ]]; then
+    echo omarchy
+    return
+  fi
+  echo missing
+}
+
+if [[ "$TARGET" == "auto" ]]; then
+  TARGET="$(detect_target)"
+fi
+
+if [[ "$TARGET" == "missing" ]]; then
+  cat >&2 <<'EOF'
+No Omarchy stack found (/usr/share/omarchy missing).
+
+  • On Omarchy OS: you already have it — something is wrong with PATH/install.
+  • On baseline Arch Linux:
+      ./scripts/setup-arch-omarchy-stack.sh
+      ./install.sh --target arch
+
+See docs/arch-linux.md
+EOF
   exit 1
 fi
 
-need_cmd hyprctl
-need_cmd omarchy
+export OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+export PATH="$OMARCHY_PATH/bin:$PATH"
 
+need_cmd hyprctl
+if ! command -v omarchy >/dev/null 2>&1 && ! command -v omarchy-shell >/dev/null 2>&1; then
+  echo "Omarchy binaries not on PATH. Export OMARCHY_PATH=/usr/share/omarchy and" >&2
+  echo "PATH=\"\$OMARCHY_PATH/bin:\$PATH\", or re-run scripts/setup-arch-omarchy-stack.sh" >&2
+  exit 1
+fi
+
+echo "==> Target: $TARGET"
 echo "==> Backup directory: $BACKUP_ROOT"
 
 echo "==> Hyprland (~/.config/hypr)"
@@ -96,6 +153,21 @@ backup_then_copy "$ROOT/omarchy/plugins/mahmoud.network" "$HOME/.config/omarchy/
 if [[ -f "$ROOT/alacritty/alacritty.toml" ]]; then
   echo "==> Alacritty font size"
   backup_then_copy "$ROOT/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
+fi
+
+if [[ "$TARGET" == "arch" ]]; then
+  echo "==> Arch session helpers"
+  ENV_DIR="$HOME/.config/environment.d"
+  ENV_FILE="$ENV_DIR/99-omarchy-dotfiles.conf"
+  run mkdir -p "$ENV_DIR"
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[dry-run] ensure $ENV_FILE"
+  else
+    cat >"$ENV_FILE" <<'EOF'
+OMARCHY_PATH=/usr/share/omarchy
+PATH=/usr/share/omarchy/bin:${PATH}
+EOF
+  fi
 fi
 
 if [[ "$WITH_HY3" -eq 1 ]]; then
@@ -128,25 +200,38 @@ if [[ "$WITH_CONKY" -eq 1 ]]; then
   fi
 fi
 
-echo "==> Suggested packages (install what you use)"
-cat <<'EOF'
-  sudo pacman -S --needed hyprpm konsole kitty dolphin brave firefox \
-    viewnior gwenview voxtype-bin
-  # Optional per-window keyboard layout daemon:
-  #   yay -S hypr-kblayoutd-bin
-  #   systemctl --user enable --now hypr-kblayoutd.service
+echo "==> Suggested packages"
+if [[ "$TARGET" == "arch" ]]; then
+  cat <<'EOF'
+  # Already mostly handled by scripts/setup-arch-omarchy-stack.sh
+  # Optional: yay -S hypr-kblayoutd-bin voxtype-bin
 EOF
+else
+  cat <<'EOF'
+  sudo pacman -S --needed hyprpm konsole kitty dolphin brave firefox \
+    viewnior gwenview
+EOF
+fi
 
 if [[ "$DRY_RUN" -eq 0 ]]; then
   echo "==> Reload Hyprland + shell"
   hyprctl reload || true
   hyprctl configerrors || true
-  omarchy restart shell 2>/dev/null || omarchy-restart-shell 2>/dev/null || true
+  if command -v omarchy >/dev/null 2>&1; then
+    omarchy restart shell 2>/dev/null || true
+  elif command -v omarchy-shell >/dev/null 2>&1; then
+    # Best-effort on Arch if the omarchy meta CLI is thin
+    pkill -x omarchy-shell 2>/dev/null || true
+    omarchy-shell >/dev/null 2>&1 &
+  fi
 fi
 
 echo
-echo "Done."
-echo "  1. Edit ~/.config/hypr/monitors.lua and input.lua for *this* laptop."
-echo "  2. Read README.md → “How to edit each feature”."
-echo "  3. Deep hy3 / i3 keymap guide: docs/hypr-i3-setup.md"
+echo "Done (target=$TARGET)."
+echo "  1. Edit ~/.config/hypr/monitors.lua and input.lua for *this* machine."
+echo "  2. README.md → “How to edit each feature”."
+if [[ "$TARGET" == "arch" ]]; then
+  echo "  3. Arch notes: docs/arch-linux.md"
+fi
+echo "  4. Deep hy3 / i3 keymap guide: docs/hypr-i3-setup.md"
 echo "  Backup of previous configs: $BACKUP_ROOT"

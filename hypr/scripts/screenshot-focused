@@ -13,6 +13,10 @@ fi
 filepath="$OUTPUT_DIR/screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png"
 grim -g "$geo" "$filepath" || exit 1
 wl-copy --type image/png <"$filepath"
-omarchy-notification-send "Screenshot saved to clipboard and file" "Focused window" \
-  --image "$filepath" || true
+if command -v omarchy-notification-send >/dev/null 2>&1; then
+  omarchy-notification-send "Screenshot saved to clipboard and file" "Focused window" \
+    --image "$filepath" || true
+elif command -v notify-send >/dev/null 2>&1; then
+  notify-send -i "$filepath" "Screenshot saved" "Focused window → $filepath" || true
+fi
 echo "$filepath"

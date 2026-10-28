@@ -1,0 +1,42 @@
+# Packages for baseline Arch Linux + this rice.
+# Prefer: ./scripts/setup-arch-omarchy-stack.sh
+# Then:   ./install.sh --target arch
+
+# Official Arch repos
+hyprland
+hyprpm
+hyprlock
+hypridle
+hyprsunset
+xdg-desktop-portal-hyprland
+quickshell
+uwsm
+sddm
+grim
+slurp
+wl-clipboard
+jq
+kitty
+konsole
+dolphin
+pipewire
+wireplumber
+gnome-keyring
+ttf-jetbrains-mono-nerd
+git
+base-devel
+
+# From pkgs.omarchy.org ([omarchy] repo) — installed with Limine/Snapper assumed
+omarchy-keyring
+omarchy
+omarchy-settings
+omarchy-themes-intros
+
+# Optional (AUR / extra)
+# brave-bin
+# firefox
+# viewnior
+# gwenview
+# voxtype-bin
+# hypr-kblayoutd-bin
+# conky  (or use lean-conky-config via ./install.sh --with-conky)

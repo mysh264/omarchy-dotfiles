@@ -1,12 +1,13 @@
 # Omarchy Dotfiles — i3-style Hyprland + custom bar
 
-> Portable **user** configs for [Omarchy](https://omarchy.org): hy3 (i3 containers & tabs), a remapped keymap, bottom status bar with hardware stats, dual-stack-friendly network widget, dropdown Kitty, Conky autostart, and screenshot binds that feel familiar.
+> Portable **user** configs for [Omarchy](https://omarchy.org) **and baseline [Arch Linux](https://archlinux.org/)**: hy3 (i3 containers & tabs), a remapped keymap, bottom status bar with hardware stats, dual-stack-friendly network widget, dropdown Kitty, Conky autostart, and screenshot binds that feel familiar.
 
 [![Omarchy](https://img.shields.io/badge/Omarchy-4.x-black.svg)](https://github.com/omacom/omarchy)
+[![Arch Linux](https://img.shields.io/badge/Arch-Linux-1793D1.svg)](https://archlinux.org/)
 [![Hyprland](https://img.shields.io/badge/Hyprland-Lua-blue.svg)](https://wiki.hypr.land/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Use this to clone the same desktop onto another Omarchy laptop — or steal the pieces you like.
+Use this to clone the same desktop onto another **Omarchy** laptop **or** a plain **Arch** install — or steal the pieces you like.
 
 > **Credit — Omarchy**  
 > This repository is **not** Omarchy. It is a personal / shared layer of configs that sit on top of it.  
@@ -33,11 +34,23 @@ Also thanks to:
 | **Input** | `us,ara` layouts, `Win+Space` to toggle, `intl` variant |
 | **Windows** | Named workspaces + app → workspace assignments (Brave, Dolphin, mpv, …) |
 
-Deep step-by-step for the Hyprland / hy3 half lives in **[docs/hypr-i3-setup.md](docs/hypr-i3-setup.md)**.
+Deep step-by-step for the Hyprland / hy3 half lives in **[docs/hypr-i3-setup.md](docs/hypr-i3-setup.md)**.  
+Baseline Arch walkthrough: **[docs/arch-linux.md](docs/arch-linux.md)**.
 
 ---
 
-## Quick install (another Omarchy laptop)
+## Pick your OS
+
+| You have… | Do this |
+|-----------|---------|
+| **Omarchy OS** | Clone → `./install.sh` |
+| **Baseline Arch Linux** | Clone → `./scripts/setup-arch-omarchy-stack.sh` → log out/in → `./install.sh --target arch` |
+
+The Arch path layers Omarchy’s desktop packages (Hyprland helpers, Quickshell bar, `omarchy-*` tools) from [pkgs.omarchy.org](https://pkgs.omarchy.org) **without** installing Limine or replacing your bootloader. Full detail in [docs/arch-linux.md](docs/arch-linux.md).
+
+---
+
+## Quick install — Omarchy OS
 
 ### 0. Prerequisites
 
@@ -75,7 +88,35 @@ omarchy restart shell
 
 Monitors and keyboards differ per laptop — do not blindly reuse another machine’s `monitors.lua`.
 
-### 3. Optional extras
+---
+
+## Quick install — baseline Arch Linux
+
+```bash
+# 1) Arch is installed (archinstall or manual), user + sudo + network OK
+git clone https://github.com/mysh264/omarchy-dotfiles.git ~/Documents/GitHub/omarchy-dotfiles
+cd ~/Documents/GitHub/omarchy-dotfiles
+chmod +x scripts/setup-arch-omarchy-stack.sh install.sh
+
+# 2) Add Omarchy repo + desktop stack (keeps YOUR bootloader)
+./scripts/setup-arch-omarchy-stack.sh
+# log out / reboot so ~/.config/environment.d is loaded
+
+# 3) Apply this rice
+./install.sh --target arch
+# ./install.sh --target arch --with-conky
+
+# 4) Per-laptop tweaks
+$EDITOR ~/.config/hypr/monitors.lua
+$EDITOR ~/.config/hypr/input.lua
+hyprctl reload && hyprctl configerrors
+```
+
+Package checklist: [packages.arch.txt](packages.arch.txt). Deep dive: [docs/arch-linux.md](docs/arch-linux.md).
+
+---
+
+## Optional extras (both OSes)
 
 ```bash
 # Per-window keyboard language (if you use it)
@@ -110,8 +151,13 @@ omarchy-dotfiles/
 │   ├── themed/           # shell.toml.tpl override
 │   └── extensions/       # omarchy-menu.jsonc
 ├── alacritty/            → ~/.config/alacritty/ (font size 11)
-├── docs/hypr-i3-setup.md # long-form hy3 + keymap guide
-├── install.sh
+├── scripts/
+│   └── setup-arch-omarchy-stack.sh   # Arch: Omarchy repo + packages
+├── docs/
+│   ├── arch-linux.md     # baseline Arch walkthrough
+│   └── hypr-i3-setup.md  # long-form hy3 + keymap guide
+├── packages.arch.txt
+├── install.sh            # --target auto|omarchy|arch
 └── LICENSE
 ```
 
@@ -308,6 +354,8 @@ hyprctl plugin list
 | Screenshots fail | `grim`, `wl-clipboard`, and `jq` installed; focused script needs an active window |
 | Conky missing | Install [lean-conky-config](https://github.com/mysh264/lean-conky-config) or `./install.sh --with-conky` |
 | `configerrors` noise | Fix the printed Lua line; do not ignore it |
+| Arch: `omarchy` not found | Run `setup-arch-omarchy-stack.sh`, then re-login so `environment.d` sets `PATH` |
+| Arch: pacman wants Limine | Use the setup script’s `--assume-installed limine,…` flags — keep your bootloader |
 
 ---
 
