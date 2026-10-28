@@ -50,10 +50,18 @@ if [[ -f /etc/os-release ]]; then
   . /etc/os-release
 fi
 
-if [[ "${ID:-}" != "arch" && "${ID_LIKE:-}" != *"arch"* ]]; then
-  echo "This helper is for Arch Linux (got ID=${ID:-unknown})." >&2
-  exit 1
-fi
+# Arch, EndeavourOS (ID=endeavouros), CachyOS (ID=cachyos), etc.
+case "${ID:-}" in
+  arch|endeavouros|cachyos|manjaro|garuda) ;; 
+  *)
+    if [[ "${ID_LIKE:-}" != *"arch"* ]]; then
+      echo "This helper is for Arch-based systems (got ID=${ID:-unknown})." >&2
+      echo "Supported examples: Arch, EndeavourOS, CachyOS." >&2
+      exit 1
+    fi
+    ;;
+esac
+echo "==> Detected Arch-family OS: ID=${ID:-unknown} ID_LIKE=${ID_LIKE:-}"
 
 if [[ -d /usr/share/omarchy/bin && -x /usr/share/omarchy/bin/omarchy-shell ]]; then
   echo "==> Omarchy stack already present under /usr/share/omarchy"

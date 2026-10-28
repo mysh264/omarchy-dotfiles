@@ -44,9 +44,11 @@ Baseline Arch walkthrough: **[docs/arch-linux.md](docs/arch-linux.md)**.
 | You have… | Do this |
 |-----------|---------|
 | **Omarchy OS** | Clone → `./install.sh` |
-| **Baseline Arch Linux** | Clone → `./scripts/setup-arch-omarchy-stack.sh` → log out/in → `./install.sh --target arch` |
+| **Arch / EndeavourOS / CachyOS** | Clone → `./scripts/setup-arch-omarchy-stack.sh` → log out/in → `./install.sh --target arch` |
 
-The Arch path layers Omarchy’s desktop packages (Hyprland helpers, Quickshell bar, `omarchy-*` tools) from [pkgs.omarchy.org](https://pkgs.omarchy.org) **without** installing Limine or replacing your bootloader. Full detail in [docs/arch-linux.md](docs/arch-linux.md).
+**Not zero-config on EndeavourOS or CachyOS.** They are Arch-based (`ID_LIKE=arch`), so the same stack script works, but a stock install does **not** ship Omarchy’s shell/Lua helpers. You still run the setup once.
+
+The Arch-family path layers Omarchy’s desktop packages (Hyprland helpers, Quickshell bar, `omarchy-*` tools) from [pkgs.omarchy.org](https://pkgs.omarchy.org) **without** installing Limine or replacing your bootloader. Full detail in [docs/arch-linux.md](docs/arch-linux.md).
 
 ---
 

@@ -1,8 +1,10 @@
 # Baseline Arch Linux
 
-Use this path when the laptop is **vanilla Arch** (or another Arch-based install that is **not** Omarchy OS), and you still want the same Hyprland + bar + keymap as on Omarchy.
+Use this path when the laptop is **vanilla Arch**, **EndeavourOS**, **CachyOS**, or another Arch-based install that is **not** Omarchy OS, and you still want the same Hyprland + bar + keymap as on Omarchy.
 
-These configs speak Omarchy’s Lua helpers (`o.bind`, `o.window`, …) and launch Omarchy’s Quickshell bar. On plain Arch you **layer the Omarchy desktop packages** on top of Arch — you do **not** have to wipe the disk and install Omarchy OS.
+These configs speak Omarchy’s Lua helpers (`o.bind`, `o.window`, …) and launch Omarchy’s Quickshell bar. On those distros you **layer the Omarchy desktop packages** on top — you do **not** have to wipe the disk and install Omarchy OS.
+
+Stock EndeavourOS / CachyOS / Arch do **not** include that stack. One setup script run is required; after that, `./install.sh --target arch` applies this rice.
 
 > **Credit:** Omarchy itself is © David Heinemeier Hansson and the Omarchy / Omacom team.  
 > Upstream: [github.com/omacom/omarchy](https://github.com/omacom/omarchy) · [omarchy.org](https://omarchy.org)
