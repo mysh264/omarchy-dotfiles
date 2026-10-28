@@ -9,7 +9,7 @@
 
 Use this to clone the same desktop onto another **Omarchy** laptop **or** a plain **Arch** install — or steal the pieces you like.
 
-> **Full wiki:** every feature and how to edit it — browse [`wiki/`](wiki/Home.md) in this repo, or the GitHub Wiki at **https://github.com/mysh264/omarchy-dotfiles/wiki** (same content).
+> **Full wiki:** step-by-step Hyprland + Omarchy config guides and every feature — [`wiki/Home.md`](wiki/Home.md) or **https://github.com/mysh264/omarchy-dotfiles/wiki** (start with Learn Hyprland → Learn Omarchy Hyprland → Build This Rice).
 
 
 > **Credit — Omarchy**  

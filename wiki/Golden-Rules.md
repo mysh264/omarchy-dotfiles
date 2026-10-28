@@ -2,6 +2,8 @@
 
 Read this before changing anything. Most “it broke after I edited X” issues come from skipping these.
 
+Learning path: [Learn Hyprland](Learn-Hyprland) → [Learn Omarchy Hyprland](Learn-Omarchy-Hyprland) → [Build This Rice](Build-This-Rice).
+
 ## 1. Edit user config only
 
 | Do | Don’t |

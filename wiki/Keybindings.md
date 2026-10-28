@@ -146,3 +146,34 @@ Then:
 ```bash
 hyprctl reload && hyprctl configerrors
 ```
+
+## Find a key with `wev`
+
+```bash
+sudo pacman -S --needed wev
+wev
+```
+
+Press the key. Use the X keycode with `code:N` in binds (often evdev + 8). US letter codes used in this file’s comments: Q=24, W=25, E=26, R=27, A=38, H=43, J=44, Z=52, X=53, C=54, V=55, N=57; digits 1–0 → codes 10–19.
+
+## i3 → Hyprland (hy3) map
+
+| i3 | This rice |
+| --- | --- |
+| `focus left/…` | `hy3.move_focus("l"/"d"/"u"/"r")` |
+| `move left/…` | `hy3.move_window(…)` |
+| `split h` / `v` | `hy3.make_group("h"|"v")` |
+| `layout toggle tabbed split` | `hy3.change_group("toggletab")` |
+| `layout toggle split` | `hy3.change_group("opposite")` |
+| `focus parent` | `hy3.change_focus("raise")` |
+| `kill` | `hy3.kill_active()` |
+| `floating toggle` | `hl.dsp.window.float({ action = "toggle" })` |
+| `workspace N` | `hl.dsp.focus({ workspace = "N" })` |
+| `move container to workspace N` | `hy3.move_to_workspace("N", { follow = true })` |
+| `reload` | `hyprctl reload` |
+
+i3 stacking has no hy3 equivalent. i3 in-place `restart` does not exist — use reload.
+
+**Always unbind** Omarchy’s conflicting keys first (lists at top of `bindings.lua`). Do not use string dispatchers like `hyprctl dispatch hy3:movefocus` — use the Lua plugin functions.
+
+New to Omarchy binds? [Learn Omarchy Hyprland](Learn-Omarchy-Hyprland) · rebuild order: [Build This Rice](Build-This-Rice).
