@@ -50,9 +50,9 @@ hl.workspace_rule({ workspace = "f[1]", gaps_in = 0, gaps_out = 0 })
 
 local workspace_names = {
   "1:  ",
-  "2:  ",
-  "3:  ",
-  "4:  ",
+  "2:  ",
+  "3: ",
+  "4:  ",
   "5:  ",
   "6:  ",
   "7:  ",
@@ -115,3 +115,6 @@ o.window({ class = "^dropdown\\.terminal$" }, {
   size = { "monitor_w", "monitor_h * 0.4" },
   opacity = "0.95 0.95",
 })
+
+-- TildaZ autostart (added by "tildaz --desktop add", removed by "tildaz --desktop remove")
+pcall(require, "tildaz")

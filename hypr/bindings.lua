@@ -166,7 +166,8 @@ local function toggle_dropdown()
       end
     end
     if not exists then
-      hl.exec_cmd(o.launch("kitty --class dropdown.terminal"))
+      -- hl.exec_cmd(o.launch("kitty --class dropdown.terminal"))
+      hl.exec_cmd(o.launch("tildaz --toggle"))
       hl.timer(function()
         hl.dispatch(hl.dsp.workspace.toggle_special("dropdown"))
       end, { timeout = 200, type = "oneshot" })
@@ -254,15 +255,15 @@ o.bind("SUPER + SHIFT + RETURN", "Terminal (kitty)", { launch = "kitty" })
 o.bind("SUPER + code:44", "Brave", { launch = "brave" }) -- J
 o.bind("SUPER + SHIFT + code:44", "Firefox", { launch = "firefox" }) -- J
 o.bind("SUPER + code:57", "Files", { launch = "dolphin" }) -- N
-o.bind("XF86Favorites", "Dropdown terminal", toggle_dropdown())
-o.bind("code:91", "Dropdown terminal", toggle_dropdown()) -- KP Delete
+o.bind("XF86Favorites", "Dropdown terminal", { launch = "tildaz --toggle" })
+o.bind("code:91", "Dropdown terminal", { launch = "tildaz --toggle" }) -- KP Delete
 -- Side buttons. 275 is back, 276 is forward.
 -- Do not pass mouse = true here. That flag is for drag and resize binds.
 -- A click command with that flag never runs.
 unbind("mouse:275")
 unbind("mouse:276")
 o.bind("mouse:275", "Previous workspace", hl.dsp.focus({ workspace = "previous" }))
-o.bind("mouse:276", "Dropdown terminal", toggle_dropdown())
+o.bind("mouse:276", "Dropdown terminal", { launch = "tildaz --toggle" })
 
 -- Close.
 o.bind("SUPER + code:24", "Kill", hy3.kill_active()) -- Q

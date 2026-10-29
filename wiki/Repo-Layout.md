@@ -29,7 +29,7 @@ omarchy-dotfiles/
 │   ├── extensions/
 │   │   └── omarchy-menu.jsonc
 │   └── defaults/
-│       └── agent             # e.g. cursor-agent
+│       └── agent             # e.g. claude
 ├── alacritty/            → ~/.config/alacritty/
 │   └── alacritty.toml
 ├── scripts/

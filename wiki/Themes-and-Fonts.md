@@ -99,7 +99,7 @@ systemctl --user status wallpaper-slideshow.service
 ## Default AI agent
 
 **File:** `~/.config/omarchy/defaults/agent`  
-Shipped: `cursor-agent`  
+Shipped: `claude`  
 Change to what `omarchy-default-agent` accepts, or delete for Omarchy’s setup invitation.
 
 ---

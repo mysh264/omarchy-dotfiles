@@ -34,7 +34,7 @@ Also thanks to:
 | **Keys** | i3-ish focus/move/split/tab binds; Omarchy menu on `SUPER+D`; screenshots on `SUPER+S` / `SUPER+SHIFT+S` |
 | **Bar** | Bottom bar (`mahmoud.bar`), hardware stats, wallpaper control, cloned network panel |
 | **Autostart** | hy3 reload, Lean Conky, dropdown Kitty (`special:dropdown`) |
-| **Input** | `us,ara` layouts, `Win+Space` to toggle, `intl` variant |
+| **Input** | `us,ara` layouts, `Win+Space` to toggle |
 | **Windows** | Named workspaces + app → workspace assignments (Brave, Dolphin, mpv, …) |
 
 Deep step-by-step for the Hyprland / hy3 half lives in **[docs/hypr-i3-setup.md](docs/hypr-i3-setup.md)**.  
@@ -200,7 +200,7 @@ Useful binds in this tree:
 | `SUPER+H / V / W / E` | hy3 split / tab / opposite |
 | `SUPER+Arrows` | Focus (hy3) |
 | `SUPER+Shift+Arrows` | Move window (hy3) |
-| Favorites / KP Delete / mouse back | Dropdown Kitty |
+| Favorites / KP Delete / mouse forward | Dropdown terminal ([TildaZ](https://github.com/ensky0/tildaz); see [wiki → Dropdown Terminal](https://github.com/mysh264/omarchy-dotfiles/wiki/Dropdown-Terminal)) |
 
 Screenshots: fullscreen uses Omarchy’s capture helper; focused window uses `hypr/scripts/screenshot-focused`.
 
@@ -261,7 +261,7 @@ Then set `output`, `mode`, `position`, `scale` for each panel. Leave commented e
 
 **File:** `hypr/input.lua`
 
-Current defaults: `kb_layout = "us,ara"`, toggle with `Win+Space` (`grp:win_space_toggle`), variant `intl`. Uncomment the touchpad / sensitivity blocks as needed.
+Current defaults: `kb_layout = "us,ara"`, toggle with `Win+Space` (`grp:win_space_toggle`), no variant (uncomment `kb_variant = "intl"` for US-International). Uncomment the touchpad / sensitivity blocks as needed.
 
 ### Status bar layout
 
@@ -304,7 +304,7 @@ omarchy plugin clone omarchy.network
 ### Workspaces widget (cloned)
 
 **Dir:** `omarchy/plugins/mahmoud.workspaces/`  
-Omarchy's stock widget always shows 1–5, adds only workspaces that exist (up to 10), and shows bare numbers. This clone shows all 12 workspaces with the same names as `workspace_names` in `hypr/hyprland.lua` (for example `1: >_`). The current workspace is highlighted and empty ones are dimmed.
+Omarchy's stock widget always shows 1–5, adds only workspaces that exist (up to 10), and shows bare numbers. This clone always shows workspaces 1–7, adds 8–12 only while they hold a window or you are on them, and labels each one with its name from `workspace_names` in `hypr/hyprland.lua` (for example `1: >_`). The current workspace is highlighted and empty ones are dimmed.
 
 How it was made:
 
@@ -314,7 +314,10 @@ omarchy plugin clone omarchy.workspaces   # copies it and switches shell.json to
 omarchy restart shell                     # if the hot reload does not pick it up
 ```
 
-**Keep the names in sync.** Hyprland does not create empty workspaces, so their names cannot be read live. The widget keeps its own `workspaceNames` list in `Workspaces.qml`. When you rename a workspace in `hypr/hyprland.lua`, change the same entry there. Add or remove entries to show more or fewer workspaces.
+- **Names / icons:** edit only the `workspace_names` table in `hypr/hyprland.lua`. The widget reads that file and watches it, so empty and occupied workspaces always show the same icon.  
+- **How many are shown:** `readonly property int alwaysShown: 7` at the top of `Workspaces.qml`.  
+
+Details: [wiki → Plugins](https://github.com/mysh264/omarchy-dotfiles/wiki/Plugins).
 
 To go back to the stock widget, set the id in `shell.json` to `omarchy.workspaces`.
 
@@ -343,7 +346,7 @@ omarchy theme bg next
 
 ### Default agent
 
-**File:** `omarchy/defaults/agent` — currently `cursor-agent`. Change to whatever `omarchy-default-agent` accepts on your build, or delete to get Omarchy’s setup invitation again.
+**File:** `omarchy/defaults/agent` — currently `claude`. Change to whatever `omarchy-default-agent` accepts on your build, or delete to get Omarchy’s setup invitation again.
 
 ### Night light / portal
 

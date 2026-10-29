@@ -55,7 +55,7 @@ Keep **only personal overrides** here. Uncommented settings replace Omarchy defa
 |---------|-------|---------|
 | `kb_layout` | `us,ara` | US + Arabic |
 | `kb_options` | `grp:win_space_toggle` | **Win+Space** cycles layouts |
-| `kb_variant` | `intl` | International US variant |
+| `kb_variant` | *(commented out)* | Plain US. Uncomment `kb_variant = "intl"` for US-International (dead keys for accents) |
 | `resolve_binds_by_sym` | `0` | Prefer keycodes for binds |
 | `follow_mouse` | `1` | Focus follows mouse (Omarchy-style) |
 

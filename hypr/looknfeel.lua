@@ -7,7 +7,7 @@ hl.config({
   general = {
     gaps_in = 8,
     gaps_out = 3,
-    border_size = 0,
+    border_size = 5,
     layout = layout,
   },
 })
@@ -27,8 +27,8 @@ hl.config({
 hl.layer_rule({
   match = { namespace = "omarchy-bar" },
   blur = true,
-  ignore_alpha = true,
-  no_anim = true,
+  ignore_alpha = false,
+  no_anim = false,
   animation = "none",
 })
 
@@ -138,9 +138,12 @@ if hl.plugin.hy3 ~= nil then
         hl.dispatch(hl.dsp.focus({ workspace = tostring(workspace_id) }))
       end
 
-      if tiled_windows(workspace_id, except_address) <= 1 then
+      local total_windows = tiled_windows(workspace_id, except_address)
+      if total_windows <= 1 then
         hl.dispatch(hl.plugin.hy3.change_group("h"))
-      else
+      elseif total_windows == 2 then
+        -- Only force "tab" when a 2nd window opens up initially.
+        -- If you manually choose a layout later, it won't be trapped here.
         hl.dispatch(hl.plugin.hy3.change_group("tab"))
       end
 

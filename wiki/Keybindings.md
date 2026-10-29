@@ -56,9 +56,11 @@ Change `run_corner()` to remap corners.
 
 Super+Shift+M stays Omarchy Music (not rebound here).
 
-### 3. Dropdown Kitty
+### 3. Dropdown terminal
 
-`toggle_dropdown()` looks for class `dropdown.terminal`. If missing, launches Kitty with that class, then toggles `special:dropdown`. Bound to Favorites key, KP Delete, and mouse forward (276).
+Favorites key, KP Delete, and mouse forward (276) run `tildaz --toggle` ([TildaZ](https://github.com/ensky0/tildaz)).
+
+The Kitty fallback `toggle_dropdown()` is still in the file: it looks for class `dropdown.terminal`, launches it if missing, then toggles `special:dropdown`. How to switch: [Dropdown Terminal](Dropdown-Terminal).
 
 ### 4. Applications
 

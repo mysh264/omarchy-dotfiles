@@ -11,7 +11,7 @@ i3-style visuals on top of hy3: gaps, blur, frosted tab strip, and automatic tab
 general = {
   gaps_in = 8,
   gaps_out = 3,
-  border_size = 0,
+  border_size = 5,
   layout = "hy3",   -- or dwindle if plugin not loaded yet
 }
 ```
@@ -47,8 +47,8 @@ Bar layer blur:
 hl.layer_rule({
   match = { namespace = "omarchy-bar" },
   blur = true,
-  ignore_alpha = true,
-  no_anim = true,
+  ignore_alpha = false,
+  no_anim = false,
   animation = "none",
 })
 ```
@@ -90,7 +90,10 @@ Expect: `hy3`, `false`, `0`, `true` (after hy3 is loaded).
 Listeners on `window.open` / `window.close` / `window.move_to_workspace`:
 
 - **≤1 tiled window** → `change_group("h")` (no title bar)  
-- **≥2 tiled windows** → `change_group("tab")`  
+- **exactly 2 tiled windows** → `change_group("tab")`  
+- **3 or more** → left alone  
+
+Only the second window forces tabs. If you then switch the container to a split yourself (`SUPER+H` / `SUPER+V`), opening a third window keeps your choice instead of snapping back to tabs.
 
 `hy3:changegroup` only affects the **focused** workspace. When a window opens on another workspace (e.g. mpv → 5), the helper briefly focuses that workspace, runs the change, then returns — with cursor warps disabled for the hop so the pointer doesn’t jump.
 

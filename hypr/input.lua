@@ -11,7 +11,7 @@ hl.config({
     kb_options = "grp:win_space_toggle",
     resolve_binds_by_sym = 0,
     -- Use a specific keyboard variant if needed (e.g. intl for international keyboards).
-    kb_variant = "intl",
+    -- kb_variant = "intl",
     follow_mouse = 1,
 --
 --     -- Change speed of keyboard repeat.

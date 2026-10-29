@@ -12,7 +12,7 @@ Defaults from `hypr/bindings.lua`. Mod = Super (Windows key) unless noted.
 | Super+J | Brave |
 | Super+Shift+J | Firefox |
 | Super+N | Dolphin |
-| XF86Favorites / KP Delete / Mouse forward | Dropdown Kitty (`special:dropdown`) |
+| XF86Favorites / KP Delete / Mouse forward | Dropdown terminal (TildaZ, `tildaz --toggle`) |
 | Mouse back | Previous workspace |
 
 ## Close

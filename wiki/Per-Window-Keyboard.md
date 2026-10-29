@@ -11,7 +11,7 @@ This rice uses [hypr-kblayoutd](https://github.com/kengzzzz/hypr-kblayoutd).
 ```lua
 kb_layout = "us,ara",
 kb_options = "grp:win_space_toggle",  -- Win+Space
-kb_variant = "intl",
+-- kb_variant = "intl",   -- uncomment for US-International
 ```
 
 ## Install & enable
