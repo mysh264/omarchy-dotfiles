@@ -17,6 +17,8 @@ omarchy restart shell         # bar issues
 | Login hangs / black screen on NVIDIA | hy3 loaded too early | Keep hy3 **out** of cold-start `hyprland.lua`; use autostart `hyprpm reload && hyprctl reload` as shipped |
 | hy3 binds do nothing | Plugin not loaded / wrong workspace layout | `hyprpm enable hy3`; wait for autostart reload; check layouts below |
 | Focus/move dead on some workspaces only | Saved Omarchy layout ≠ hy3 | Inspect `~/.local/state/omarchy/workspace-layouts/`; ensure `hyprland.lua` forces hy3 after toggles; keep Super+L unbound |
+| Split windows have no gaps / borders gone | Omarchy's global no-gaps toggle is on | `ls ~/.local/state/omarchy/toggles/hypr/` shows `window-no-gaps.lua` → press `Super+Shift+Backspace` again or run `omarchy-hyprland-window-gaps-toggle` |
+| Bar shows only some workspaces, or numbers instead of names | Stock workspaces widget in use | `shell.json` must use `mahmoud.workspaces`; then `omarchy restart shell` ([Plugins](Plugins)) |
 | Bar missing / wrong widgets | shell.json ids / shell not running | `omarchy restart shell`; confirm ids match manifests; `omarchy plugin list` |
 | Bar won’t stay hidden / peek broken | Flag or shell sync | Check `~/.local/state/omarchy/toggles/bar-off`; Super+M; `omarchy-shell` running |
 | Screenshots fail | Missing tools / no focused window | Install `grim` `wl-clipboard` `jq`; run focused script manually |

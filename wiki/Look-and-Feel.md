@@ -18,6 +18,19 @@ general = {
 
 Edit `gaps_in` / `gaps_out` / `border_size` to taste. `layout` becomes `hy3` only when the plugin is present (see NVIDIA note in [Golden Rules](Golden-Rules)).
 
+### No gaps for a single window
+
+In `hypr/hyprland.lua`:
+
+```lua
+hl.workspace_rule({ workspace = "w[tv1]", gaps_in = 0, gaps_out = 0 })
+hl.workspace_rule({ workspace = "f[1]", gaps_in = 0, gaps_out = 0 })
+```
+
+A workspace with one visible tiled window (a hy3 tab group counts as one) or one fullscreen window gets no gaps. Split windows keep `gaps_in` / `gaps_out`.
+
+**Do not press `Super+Shift+Backspace` for this.** That is Omarchy's global "Toggle window gaps". It writes `~/.local/state/omarchy/toggles/hypr/window-no-gaps.lua`, which is loaded after your files by `require("default.hypr.toggles")`. It sets gaps **and** `border_size` to 0 for every window, so split windows touch. Turn it off with the same keys or `omarchy-hyprland-window-gaps-toggle`.
+
 Also enabled: `workspace_back_and_forth = true` (pressing the key for the current workspace goes back).
 
 ## Blur (required for glass)

@@ -1,11 +1,12 @@
-# Plugins (cloned bar & network)
+# Plugins (cloned bar, network & workspaces)
 
-Omarchy first-party plugins live in the package tree. This rice **clones** two of them into your config so you can edit safely — package updates will not overwrite your copies.
+Omarchy first-party plugins live in the package tree. This rice **clones** three of them into your config so you can edit safely — package updates will not overwrite your copies.
 
 | Plugin id | Path | Kind | Cloned from |
 |-----------|------|------|-------------|
 | `mahmoud.bar` | `omarchy/plugins/mahmoud.bar/` | `bar` | `omarchy.bar` |
 | `mahmoud.network` | `omarchy/plugins/mahmoud.network/` | `bar-widget` | `omarchy.network` |
+| `mahmoud.workspaces` | `omarchy/plugins/mahmoud.workspaces/` | `bar-widget` | `omarchy.workspaces` |
 
 Live under `~/.config/omarchy/plugins/…`.
 
@@ -55,6 +56,41 @@ omarchy plugin clone omarchy.network
 omarchy plugin list
 omarchy restart shell
 ```
+
+## Workspaces — `mahmoud.workspaces`
+
+- `Workspaces.qml` + `manifest.json`  
+- Placed in `shell.json` left layout (instead of `omarchy.workspaces`)  
+
+The stock widget always shows 1–5, adds only workspaces that exist (up to 10), and shows bare numbers. The current one becomes a dot. This clone:
+
+- always shows workspaces **1–12**  
+- labels each one with its name from `workspace_names` in `hypr/hyprland.lua` (e.g. `1: >_`)  
+- highlights the current workspace and dims empty ones  
+
+How it was made:
+
+```bash
+omarchy plugin clone omarchy.workspaces   # copies it and switches shell.json to mahmoud.workspaces
+# edit ~/.config/omarchy/plugins/mahmoud.workspaces/Workspaces.qml
+omarchy restart shell                     # if the hot reload does not pick it up
+```
+
+### Keep the names in sync
+
+Hyprland does not create empty workspaces, so their names cannot be read live. The widget keeps its own copy in `Workspaces.qml`:
+
+```qml
+readonly property var workspaceNames: [
+  "1: …",
+  …
+  "12: …"
+]
+```
+
+When you rename a workspace in `hypr/hyprland.lua`, change the same entry here. Existing workspaces show their live Hyprland name. Add or remove entries to show more or fewer workspaces.
+
+To go back to the stock widget, set the id in `shell.json` to `omarchy.workspaces`.
 
 ## General plugin commands
 

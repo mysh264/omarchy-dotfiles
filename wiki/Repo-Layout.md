@@ -19,7 +19,8 @@ omarchy-dotfiles/
 │   ├── shell.toml        # shell font size
 │   ├── plugins/
 │   │   ├── mahmoud.bar/      # cloned bar engine (id: mahmoud.bar)
-│   │   └── mahmoud.network/  # cloned network widget
+│   │   ├── mahmoud.network/  # cloned network widget
+│   │   └── mahmoud.workspaces/  # all 12 workspaces with their names
 │   ├── bar/
 │   │   ├── scripts/hw-stats  # CPU/GPU/RAM command module
 │   │   └── modules/wallpaper.qml

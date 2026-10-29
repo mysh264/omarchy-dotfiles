@@ -23,7 +23,7 @@ Controls bar position, widget order, idle lock timings, and which bar engine plu
 
 ## Shipped layout (summary)
 
-**Left:** menu · workspaces  
+**Left:** menu · **mahmoud.workspaces** (all 12, named — see [Plugins](Plugins))  
 
 **Center:** system-update  
 
