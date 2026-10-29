@@ -149,6 +149,7 @@ backup_then_copy "$ROOT/omarchy/bar" "$HOME/.config/omarchy/bar"
 run chmod +x "$HOME/.config/omarchy/bar/scripts/hw-stats"
 backup_then_copy "$ROOT/omarchy/plugins/mahmoud.bar" "$HOME/.config/omarchy/plugins/mahmoud.bar"
 backup_then_copy "$ROOT/omarchy/plugins/mahmoud.network" "$HOME/.config/omarchy/plugins/mahmoud.network"
+backup_then_copy "$ROOT/omarchy/plugins/mahmoud.workspaces" "$HOME/.config/omarchy/plugins/mahmoud.workspaces"
 
 if [[ -f "$ROOT/alacritty/alacritty.toml" ]]; then
   echo "==> Alacritty font size"

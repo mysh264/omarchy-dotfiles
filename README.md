@@ -151,7 +151,7 @@ omarchy-dotfiles/
 ├── omarchy/              → ~/.config/omarchy/
 │   ├── shell.json        # bar layout, idle lock timings
 │   ├── shell.toml        # shell font size
-│   ├── plugins/          # mahmoud.bar, mahmoud.network (cloned)
+│   ├── plugins/          # mahmoud.bar, mahmoud.network, mahmoud.workspaces (cloned)
 │   ├── bar/              # hw-stats script + wallpaper QML module
 │   ├── themed/           # shell.toml.tpl override
 │   └── extensions/       # omarchy-menu.jsonc
@@ -213,6 +213,19 @@ Screenshots: fullscreen uses Omarchy’s capture helper; focused window uses `hy
 - `plugin.hy3.tabs.*` — height, padding, colors (active red outline)
 
 NVIDIA note: do **not** force-load hy3 inside `hyprland.lua` on cold start on affected GPUs. This setup loads via `autostart.lua` (`hyprpm reload && hyprctl reload`). Details in `docs/hypr-i3-setup.md`.
+
+### No gaps for a single window
+
+**File:** `hypr/hyprland.lua`
+
+```lua
+hl.workspace_rule({ workspace = "w[tv1]", gaps_in = 0, gaps_out = 0 })
+hl.workspace_rule({ workspace = "f[1]", gaps_in = 0, gaps_out = 0 })
+```
+
+A workspace with one visible tiled window (a hy3 tab group counts as one) or one fullscreen window gets no gaps. Split windows keep the `gaps_in` / `gaps_out` from `hypr/looknfeel.lua`.
+
+**Do not press `Super+Shift+Backspace` for this.** That is Omarchy's global "Toggle window gaps". It writes `~/.local/state/omarchy/toggles/hypr/window-no-gaps.lua`, which loads after your files and sets gaps **and** `border_size` to 0 for every window. Split windows then touch with no gaps. Turn it off with the same keys or `omarchy-hyprland-window-gaps-toggle`.
 
 ### Window rules & workspace names
 
@@ -288,6 +301,23 @@ omarchy plugin clone omarchy.network
 # then point shell.json at the new id, or keep mahmoud.network
 ```
 
+### Workspaces widget (cloned)
+
+**Dir:** `omarchy/plugins/mahmoud.workspaces/`  
+Omarchy's stock widget always shows 1–5, adds only workspaces that exist (up to 10), and shows bare numbers. This clone shows all 12 workspaces with the same names as `workspace_names` in `hypr/hyprland.lua` (for example `1: >_`). The current workspace is highlighted and empty ones are dimmed.
+
+How it was made:
+
+```bash
+omarchy plugin clone omarchy.workspaces   # copies it and switches shell.json to mahmoud.workspaces
+# then edit ~/.config/omarchy/plugins/mahmoud.workspaces/Workspaces.qml
+omarchy restart shell                     # if the hot reload does not pick it up
+```
+
+**Keep the names in sync.** Hyprland does not create empty workspaces, so their names cannot be read live. The widget keeps its own `workspaceNames` list in `Workspaces.qml`. When you rename a workspace in `hypr/hyprland.lua`, change the same entry there. Add or remove entries to show more or fewer workspaces.
+
+To go back to the stock widget, set the id in `shell.json` to `omarchy.workspaces`.
+
 ### Cloned bar engine
 
 **Dir:** `omarchy/plugins/mahmoud.bar/`  
@@ -355,6 +385,8 @@ hyprctl plugin list
 |---------|-----|
 | Login hangs / black screen on NVIDIA | Keep hy3 **out** of cold-start `hyprland.lua`; use autostart reload (as shipped) |
 | hy3 binds do nothing | `hyprpm list` → enabled? `hyprctl plugin list` → loaded? Reload after enable |
+| Split windows have no gaps / borders gone | Omarchy's no-gaps toggle is on: `ls ~/.local/state/omarchy/toggles/hypr/` shows `window-no-gaps.lua`. Press `Super+Shift+Backspace` again or run `omarchy-hyprland-window-gaps-toggle` |
+| Bar shows only some workspaces, or numbers instead of names | `shell.json` must use `mahmoud.workspaces`, not `omarchy.workspaces`; then `omarchy restart shell` |
 | Bar missing widgets | `omarchy restart shell`; confirm `shell.json` ids match plugin manifests |
 | Screenshots fail | `grim`, `wl-clipboard`, and `jq` installed; focused script needs an active window |
 | Conky missing | Install [lean-conky-config](https://github.com/mysh264/lean-conky-config) or `./install.sh --with-conky` |
