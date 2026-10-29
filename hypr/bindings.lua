@@ -148,33 +148,24 @@ hl.timer(function()
   end
 end, { timeout = 50, type = "repeat" })
 
+-- TildaZ dropdown terminal. F1 is TildaZ's own hotkey (it registers that bind
+-- itself); these are extra keys. They do not need hy3, so they sit above the
+-- cold-start return below and work from the first frame.
+o.bind("XF86Favorites", "Dropdown terminal", { launch = "tildaz --toggle" })
+o.bind("code:91", "Dropdown terminal", { launch = "tildaz --toggle" }) -- KP Delete
+-- Side buttons. 275 is back, 276 is forward.
+-- Do not pass mouse = true here. That flag is for drag and resize binds.
+-- A click command with that flag never runs.
+unbind("mouse:275")
+unbind("mouse:276")
+o.bind("mouse:275", "Previous workspace", hl.dsp.focus({ workspace = "previous" }))
+o.bind("mouse:276", "Dropdown terminal", { launch = "tildaz --toggle" })
+
 local hy3 = hl.plugin.hy3
 if hy3 == nil then
   -- Cold start has not loaded hy3 yet. autostart.lua loads it after the
   -- compositor is up and reloads this file, which is when these binds apply.
   return
-end
-
--- Kitty on special:dropdown. Relaunches if the window was closed.
-local function toggle_dropdown()
-  return function()
-    local exists = false
-    for _, window in ipairs(hl.get_windows()) do
-      if (window.class or "") == "dropdown.terminal" then
-        exists = true
-        break
-      end
-    end
-    if not exists then
-      -- hl.exec_cmd(o.launch("kitty --class dropdown.terminal"))
-      hl.exec_cmd(o.launch("tildaz --toggle"))
-      hl.timer(function()
-        hl.dispatch(hl.dsp.workspace.toggle_special("dropdown"))
-      end, { timeout = 200, type = "oneshot" })
-      return
-    end
-    hl.dispatch(hl.dsp.workspace.toggle_special("dropdown"))
-  end
 end
 
 local function focus_workspace_edge(last)
@@ -255,15 +246,6 @@ o.bind("SUPER + SHIFT + RETURN", "Terminal (kitty)", { launch = "kitty" })
 o.bind("SUPER + code:44", "Brave", { launch = "brave" }) -- J
 o.bind("SUPER + SHIFT + code:44", "Firefox", { launch = "firefox" }) -- J
 o.bind("SUPER + code:57", "Files", { launch = "dolphin" }) -- N
-o.bind("XF86Favorites", "Dropdown terminal", { launch = "tildaz --toggle" })
-o.bind("code:91", "Dropdown terminal", { launch = "tildaz --toggle" }) -- KP Delete
--- Side buttons. 275 is back, 276 is forward.
--- Do not pass mouse = true here. That flag is for drag and resize binds.
--- A click command with that flag never runs.
-unbind("mouse:275")
-unbind("mouse:276")
-o.bind("mouse:275", "Previous workspace", hl.dsp.focus({ workspace = "previous" }))
-o.bind("mouse:276", "Dropdown terminal", { launch = "tildaz --toggle" })
 
 -- Close.
 o.bind("SUPER + code:24", "Kill", hy3.kill_active()) -- Q
@@ -290,6 +272,9 @@ o.bind("code:81", "Move right", hy3.move_window("r")) -- KP Prior / KP_9
 
 -- Screenshots. Super+S was Omarchy scratchpad (unbound above).
 o.bind("SUPER + S", "Screenshot fullscreen", "omarchy-capture-screenshot fullscreen")
+-- Scratchpad (i3 "scratchpad show"). Omarchy's Super+Alt+S still moves a
+-- window there; this shows and hides it now that Super+S takes screenshots.
+o.bind("SUPER + SHIFT + ALT + S", "Toggle scratchpad", hl.dsp.workspace.toggle_special("scratchpad"))
 o.bind("SUPER + SHIFT + S", "Screenshot focused window", (os.getenv("HOME") or "") .. "/.config/hypr/scripts/screenshot-focused")
 
 -- Layout.

@@ -1,6 +1,6 @@
 # Packages for baseline Arch Linux + this rice.
-# Prefer: ./scripts/setup-arch-omarchy-stack.sh
-# Then:   ./install.sh --target arch
+# Prefer: ./scripts/setup-arch-omarchy-stack.sh   (installs all of this)
+# Then:   ./install.sh --target arch              (configs, hy3, TildaZ)
 
 # Official Arch repos
 hyprland
@@ -22,21 +22,28 @@ dolphin
 pipewire
 wireplumber
 gnome-keyring
-ttf-jetbrains-mono-nerd
 git
 base-devel
 
-# From pkgs.omarchy.org ([omarchy] repo) — installed with Limine/Snapper assumed
+# From pkgs.omarchy.org ([omarchy] repo), installed with
+# --assume-installed limine,limine-mkinitcpio-hook,limine-snapper-sync,snapper
 omarchy-keyring
 omarchy
 omarchy-settings
 omarchy-themes-intros
+# Font: omarchy pulls in ttf-jetbrains-mono-nerd-basic. Do not also install
+# ttf-jetbrains-mono-nerd; the two conflict.
 
-# Optional (AUR / extra)
-# brave-bin
+# Not a package: TildaZ (dropdown terminal). ./install.sh installs it
+# user-local with the official installer (https://tildaz.dev). --skip-tildaz skips it.
+
+# Optional apps the keymap and workspace rules use
+# brave-bin     ([omarchy] repo)
 # firefox
 # viewnior
 # gwenview
-# voxtype-bin
-# hypr-kblayoutd-bin
-# conky  (or use lean-conky-config via ./install.sh --with-conky)
+# conky         (or lean-conky-config via ./install.sh --with-conky)
+# voxtype-bin   ([omarchy] repo) voice dictation
+
+# Optional (AUR)
+# hypr-kblayoutd-bin   per-window keyboard layout

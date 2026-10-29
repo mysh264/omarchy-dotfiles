@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Install these Hyprland / Omarchy-shell user configs.
-# Works on Omarchy OS and on baseline Arch after the Omarchy stack is layered on.
+# Install these i3-style Hyprland / Omarchy shell user configs into ~/.config,
+# plus hy3 (hyprpm) and the TildaZ dropdown terminal (user-local, no sudo).
+# Works on Omarchy OS and on baseline Arch after the Omarchy stack is layered on
+# (scripts/setup-arch-omarchy-stack.sh). Never writes under /usr/share/omarchy/.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -8,13 +10,17 @@ BACKUP_ROOT="${OMARCHY_DOTFILES_BACKUP:-$HOME/.config/omarchy-dotfiles-backup-$(
 DRY_RUN=0
 WITH_HY3=1
 WITH_CONKY=0
+WITH_TILDAZ=1
+WITH_WALLPAPER=1
 TARGET="auto" # auto | omarchy | arch
 
 usage() {
   cat <<'EOF'
 Usage: ./install.sh [options]
 
-Install Mahmoud's desktop configs into ~/.config (Hyprland + Omarchy shell/bar).
+Install Mahmoud's i3-style desktop configs into ~/.config:
+Hyprland (hypr/), Omarchy shell/bar (omarchy/), Alacritty, and TildaZ.
+Also enables the hy3 plugin and installs TildaZ unless you skip them.
 
 Targets:
   --target auto      Detect Omarchy OS vs baseline Arch (default)
@@ -23,13 +29,17 @@ Targets:
                      (run scripts/setup-arch-omarchy-stack.sh first)
 
 Options:
-  --dry-run          Print actions only
-  --skip-hy3         Do not install/enable the hy3 Hyprland plugin
+  --dry-run          Print actions only, change nothing
+  --skip-hy3         Do not add/enable/build the hy3 plugin with hyprpm
+  --skip-tildaz      Do not install TildaZ (dropdown terminal) or copy its config
+  --skip-wallpaper   Do not install the wallpaper slideshow the bar widget controls
   --with-conky       Also clone lean-conky-config into ~/.config/conky
   -h, --help         Show this help
 
 Safe locations only — never writes under /usr/share/omarchy/.
-Existing files are copied to a timestamped backup under ~/.config/.
+Existing files are copied to a timestamped backup under ~/.config/
+(override with OMARCHY_DOTFILES_BACKUP=/some/dir).
+Docs: https://github.com/mysh264/omarchy-dotfiles/wiki
 EOF
 }
 
@@ -38,6 +48,8 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY_RUN=1; shift ;;
     --skip-hy3) WITH_HY3=0; shift ;;
     --with-conky) WITH_CONKY=1; shift ;;
+    --skip-tildaz) WITH_TILDAZ=0; shift ;;
+    --skip-wallpaper) WITH_WALLPAPER=0; shift ;;
     --target)
       TARGET="${2:-}"
       shift 2
@@ -136,6 +148,7 @@ echo "==> Target: $TARGET"
 echo "==> Backup directory: $BACKUP_ROOT"
 
 echo "==> Hyprland (~/.config/hypr)"
+# Copies over the repo files only. Machine-local files such as tildaz.lua stay.
 backup_then_copy "$ROOT/hypr" "$HOME/.config/hypr"
 run chmod +x "$HOME/.config/hypr/scripts/screenshot-focused"
 
@@ -175,6 +188,7 @@ if [[ "$WITH_HY3" -eq 1 ]]; then
   echo "==> hy3 plugin"
   if ! command -v hyprpm >/dev/null 2>&1; then
     echo "hyprpm not found. Install with: sudo pacman -S hyprpm" >&2
+    echo "(or re-run with --skip-hy3). Configs are already copied." >&2
     exit 1
   fi
   if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -186,6 +200,44 @@ if [[ "$WITH_HY3" -eq 1 ]]; then
     hyprpm enable hy3 || true
     hyprpm update || true
     hyprpm reload || true
+  fi
+fi
+
+if [[ "$WITH_WALLPAPER" -eq 1 ]]; then
+  echo "==> Wallpaper slideshow (drives the bar's wallpaper widget)"
+  # Cycles images in ~/.Wallpapers through Omarchy's background setter.
+  backup_then_copy "$ROOT/wallpaper/wallpaper-slideshow" "$HOME/.local/bin/wallpaper-slideshow"
+  run chmod +x "$HOME/.local/bin/wallpaper-slideshow"
+  if [[ ! -e "$HOME/.config/wallpaper-slideshow.conf" ]]; then
+    # Keep an existing folder/interval choice; only seed it the first time.
+    run cp "$ROOT/wallpaper/wallpaper-slideshow.conf" "$HOME/.config/wallpaper-slideshow.conf"
+  fi
+  backup_then_copy "$ROOT/wallpaper/wallpaper-slideshow.service" "$HOME/.config/systemd/user/wallpaper-slideshow.service"
+  run mkdir -p "$HOME/.Wallpapers"
+  run systemctl --user daemon-reload
+  run systemctl --user enable --now wallpaper-slideshow.service || true
+fi
+
+if [[ "$WITH_TILDAZ" -eq 1 ]]; then
+  echo "==> TildaZ dropdown terminal"
+  # Config first, so the first run already uses F1, the font and the size.
+  backup_then_copy "$ROOT/tildaz/config_0.toml" "$HOME/.config/tildaz/config_0.toml"
+  if ! command -v tildaz >/dev/null 2>&1 && [[ ! -x "$HOME/.local/bin/tildaz" ]]; then
+    # Official installer: user-local, no sudo, checks the SHA-256.
+    # Read it first if you like: https://github.com/ensky0/tildaz/blob/main/docs/install.sh
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+      echo "[dry-run] curl -LsSf https://tildaz.dev/install.sh | sh"
+    else
+      curl -LsSf https://tildaz.dev/install.sh | sh || echo "    TildaZ install failed — see https://tildaz.dev" >&2
+    fi
+  fi
+  # Writes ~/.config/hypr/tildaz.lua (autostart at login), which hyprland.lua
+  # loads with pcall(require, "tildaz"). "tildaz --desktop remove" undoes it.
+  TILDAZ_BIN="$(command -v tildaz || echo "$HOME/.local/bin/tildaz")"
+  if [[ -x "$TILDAZ_BIN" || "$DRY_RUN" -eq 1 ]]; then
+    run "$TILDAZ_BIN" --desktop add || true
+  else
+    echo "    tildaz not found — run 'tildaz --desktop add' after installing it" >&2
   fi
 fi
 
@@ -205,12 +257,15 @@ echo "==> Suggested packages"
 if [[ "$TARGET" == "arch" ]]; then
   cat <<'EOF'
   # Already mostly handled by scripts/setup-arch-omarchy-stack.sh
-  # Optional: yay -S hypr-kblayoutd-bin voxtype-bin
+  # Optional: omarchy pkg aur add hypr-kblayoutd-bin   (uses yay)
+  # Optional: sudo pacman -S voxtype-bin               (from the [omarchy] repo)
 EOF
 else
   cat <<'EOF'
-  sudo pacman -S --needed hyprpm konsole kitty dolphin brave firefox \
+  sudo pacman -S --needed hyprpm konsole kitty dolphin brave-bin firefox \
     viewnior gwenview
+  # Optional: omarchy pkg aur add hypr-kblayoutd-bin   (per-window keyboard layout)
+  # TildaZ (dropdown) is installed above unless you passed --skip-tildaz
 EOF
 fi
 
@@ -229,10 +284,12 @@ fi
 
 echo
 echo "Done (target=$TARGET)."
-echo "  1. Edit ~/.config/hypr/monitors.lua and input.lua for *this* machine."
-echo "  2. README.md → “How to edit each feature”."
+echo "  1. Edit ~/.config/hypr/monitors.lua and input.lua for *this* machine,"
+echo "     then: hyprctl reload && hyprctl configerrors"
+echo "  2. Log out and back in once so hy3 and TildaZ start the way they do at login."
+echo "  3. Wiki (every feature, how to change it): https://github.com/mysh264/omarchy-dotfiles/wiki"
+echo "  4. Long i3 → hy3 guide: docs/hypr-i3-setup.md"
 if [[ "$TARGET" == "arch" ]]; then
-  echo "  3. Arch notes: docs/arch-linux.md"
+  echo "  5. Arch notes: docs/arch-linux.md"
 fi
-echo "  4. Deep hy3 / i3 keymap guide: docs/hypr-i3-setup.md"
 echo "  Backup of previous configs: $BACKUP_ROOT"

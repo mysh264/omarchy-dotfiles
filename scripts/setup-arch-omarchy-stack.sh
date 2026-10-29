@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Layer the Omarchy desktop stack onto baseline Arch Linux without replacing
-# your bootloader (Limine/Snapper are assumed-installed, not actually installed).
+# Layer the Omarchy desktop stack onto baseline Arch Linux (also EndeavourOS,
+# CachyOS and other Arch-based installs) without replacing your bootloader:
+# Limine/Snapper are passed as --assume-installed, so pacman never installs them.
+# Afterwards run ./install.sh --target arch to apply the configs.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,15 +18,17 @@ On baseline Arch Linux this:
   2. Installs omarchy-keyring
   3. Installs omarchy + desktop deps while NOT pulling Limine/Snapper
      (keeps systemd-boot / GRUB / whatever you already use)
-  4. Writes OMARCHY_PATH + PATH into ~/.config/environment.d/
-  5. Installs Arch packages this rice expects (hyprpm, grim, …)
+  4. Writes OMARCHY_PATH + PATH into ~/.config/environment.d/ (and ~/.bashrc)
+  5. Installs Arch packages this rice expects (hyprpm, grim, konsole, …)
+     plus optional apps (brave-bin, firefox, viewnior, gwenview)
 
 Options:
   --dry-run         Print actions only
   --skip-keyring    Do not re-run pacman-key for omarchy
   -h, --help        Show help
 
-Requires sudo. Prefer reading docs/arch-linux.md first.
+Requires sudo. Read docs/arch-linux.md first.
+TildaZ (dropdown terminal) and hy3 are installed by ./install.sh, not here.
 EOF
 }
 
@@ -86,8 +90,11 @@ EOF
   fi
 
   echo "==> Install Omarchy desktop stack (skip Limine/Snapper bootloader deps)"
-  # The omarchy package Declares Depends on limine + snapper. On a normal Arch
-  # laptop you already have a bootloader — do not replace it.
+  # The omarchy package depends on limine + snapper. On a normal Arch laptop
+  # you already have a bootloader, so tell pacman they are present instead.
+  # The JetBrains Mono Nerd font comes in as omarchy's dependency
+  # ttf-jetbrains-mono-nerd-basic. Do not also request ttf-jetbrains-mono-nerd:
+  # the two conflict and the transaction fails.
   run sudo pacman -Sy --needed --noconfirm \
     --assume-installed limine \
     --assume-installed limine-mkinitcpio-hook \
@@ -95,7 +102,7 @@ EOF
     --assume-installed snapper \
     omarchy hyprland quickshell uwsm sddm \
     xdg-desktop-portal-hyprland wireplumber pipewire \
-    gnome-keyring gum jq ttf-jetbrains-mono-nerd
+    gnome-keyring gum jq
 fi
 
 echo "==> Core Arch packages for this rice"
@@ -105,10 +112,10 @@ ARCH_PKGS=(
   grim slurp wl-clipboard jq
   kitty konsole dolphin
   pipewire wireplumber
-  ttf-jetbrains-mono-nerd
   uwsm
 )
-# brave/firefox/viewnior are optional; try without failing the whole script
+# Optional apps the keymap launches. brave-bin comes from the [omarchy] repo.
+# One missing package makes pacman skip the whole list, so failure only warns.
 OPTIONAL_PKGS=(brave-bin firefox viewnior gwenview)
 
 run sudo pacman -S --needed --noconfirm "${ARCH_PKGS[@]}"

@@ -8,5 +8,5 @@ o.exec_on_start("hyprpm reload && hyprctl reload")
 -- started by this script, and installs its font. This runs on login only.
 o.exec_on_start((os.getenv("HOME") or "") .. "/.config/conky/start-lcc.sh")
 
--- Dropdown Kitty (class dropdown.terminal → special:dropdown). Login only.
-o.launch_on_start("kitty --class dropdown.terminal")
+-- TildaZ (dropdown terminal) starts itself from hypr/tildaz.lua, which
+-- "tildaz --desktop add" writes and hyprland.lua loads.

@@ -5,7 +5,8 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Variables/#input
 hl.config({
   input = {
-    -- Use multiple keyboard layouts and switch between them with Left Alt + Right Alt.
+    -- Use multiple keyboard layouts. grp:win_space_toggle switches them with Win+Space
+    -- (Omarchy's Super+Space menu is unbound in bindings.lua for this).
     kb_layout = "us,ara",
 --     kb_options = "compose:caps,shift:both_capslock_cancel,grp:alts_toggle",
     kb_options = "grp:win_space_toggle",

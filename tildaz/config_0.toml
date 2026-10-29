@@ -1,0 +1,98 @@
+# TildaZ config. CONFIG.md explains every setting.
+
+# Global hotkey. Works even when TildaZ is not focused.
+# Name a key by what it types ("ctrl+space") or by where it sits
+# ("ctrl+[Backquote]"). Only F1-F12 work without a modifier.
+hotkey           = "F1"
+
+# macOS, Linux: an absolute path, no arguments.
+# Windows: the first space ends the executable path, so arguments work.
+# Quote a path that has spaces: "\"C:\\Program Files\\Git\\bin\\bash.exe\""
+shell            = "/usr/bin/bash"
+
+auto_start       = true
+hidden_start     = false
+
+theme            = "Tilda"
+max_scroll_lines = 10000
+
+[window]
+dock_position   = "top"   # top | bottom | left | right
+width_percent   = 95.0
+height_percent  = 50.0
+offset_percent  = 50.0
+opacity_percent = 90.0
+
+[font]
+family            = "DejaVu Sans Mono"
+glyph_fallback    = ["Noto Sans CJK KR", "Noto Color Emoji"]
+size_point        = 15
+cell_width_ratio  = 1.0
+line_height_ratio = 1.1
+
+[input]
+# true: every mouse selection replaces the clipboard.
+# false: copy with Ctrl+Shift+C (Cmd+C on macOS) or a right-click.
+copy_on_select = false
+
+# Keyboard shortcuts. An action can have several keys; [] means none.
+# Key names and examples: CONFIG.md and KEYBINDINGS.md.
+
+[keys]
+
+# Tabs
+new_tab             = ["ctrl+shift+t"]
+close_tab           = ["ctrl+shift+w"]
+prev_tab            = ["ctrl+shift+["]
+next_tab            = ["ctrl+shift+]"]
+switch_tab1         = ["alt+1"]
+switch_tab2         = ["alt+2"]
+switch_tab3         = ["alt+3"]
+switch_tab4         = ["alt+4"]
+switch_tab5         = ["alt+5"]
+switch_tab6         = ["alt+6"]
+switch_tab7         = ["alt+7"]
+switch_tab8         = ["alt+8"]
+switch_tab9         = ["alt+9"]
+
+# Panes
+split_left          = ["ctrl+shift+left"]
+split_right         = ["ctrl+shift+right"]
+split_up            = ["ctrl+shift+up"]
+split_down          = ["ctrl+shift+down"]
+focus_pane_left     = ["alt+left"]
+focus_pane_right    = ["alt+right"]
+focus_pane_up       = ["alt+up"]
+focus_pane_down     = ["alt+down"]
+resize_pane_left    = ["shift+alt+left"]
+resize_pane_right   = ["shift+alt+right"]
+resize_pane_up      = ["shift+alt+up"]
+resize_pane_down    = ["shift+alt+down"]
+equalize_panes      = ["shift+alt+0"]
+zoom_pane           = ["ctrl+shift+z"]
+close_pane          = ["ctrl+shift+x"]
+
+# Search
+find                = ["ctrl+shift+f"]
+
+# Clipboard
+copy                = ["ctrl+shift+c"]
+paste               = ["ctrl+shift+v"]
+
+# Window
+fullscreen          = ["alt+return"]
+fullscreen_workarea = ["shift+alt+return"]
+quit                = ["alt+f4"]
+
+# Font size
+increase_font_size  = ["ctrl+shift+=", "ctrl+shift+plus"]
+decrease_font_size  = ["ctrl+shift+-"]
+reset_font_size     = ["ctrl+shift+backspace"]
+
+# Tools
+reset_terminal      = ["ctrl+shift+r"]
+show_about          = ["ctrl+shift+i"]
+open_config         = ["ctrl+shift+p"]
+open_log            = ["ctrl+shift+l"]
+open_shortcuts      = ["ctrl+shift+/"]
+dump_perf           = ["ctrl+shift+f12"]

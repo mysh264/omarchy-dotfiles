@@ -1,0 +1,217 @@
+#!/usr/bin/env bash
+# Cycle wallpapers from ~/.Wallpapers one by one via Omarchy's background setter.
+# Config: ~/.config/wallpaper-slideshow.conf
+
+set -euo pipefail
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/wallpaper-slideshow.conf"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/wallpaper-slideshow"
+CURRENT_LINK="${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/current/background"
+SERVICE="wallpaper-slideshow.service"
+
+WALLPAPER_DIR="${HOME}/.Wallpapers"
+INTERVAL_SEC=300
+
+if [[ -f $CONFIG ]]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG"
+fi
+
+mkdir -p "$STATE_DIR"
+
+list_wallpapers() {
+  find -L "$WALLPAPER_DIR" -type f \
+    \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \
+       -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) \
+    -print0 2>/dev/null | sort -z
+}
+
+current_path() {
+  if [[ -L $CURRENT_LINK ]]; then
+    readlink -f "$CURRENT_LINK" 2>/dev/null || true
+  fi
+}
+
+wallpaper_index() {
+  local current="$1"
+  local i
+  for i in "${!WALLPAPERS[@]}"; do
+    if [[ ${WALLPAPERS[$i]} == "$current" ]]; then
+      echo "$i"
+      return 0
+    fi
+  done
+  echo -1
+}
+
+set_by_offset() {
+  local offset="$1"
+  mapfile -d '' -t WALLPAPERS < <(list_wallpapers)
+  local total=${#WALLPAPERS[@]}
+
+  if (( total == 0 )); then
+    echo "No wallpapers found in $WALLPAPER_DIR" >&2
+    return 1
+  fi
+
+  local current
+  current=$(current_path)
+  local index
+  index=$(wallpaper_index "$current")
+
+  local next
+  if (( index == -1 )); then
+    if (( offset < 0 )); then
+      next="${WALLPAPERS[$((total - 1))]}"
+    else
+      next="${WALLPAPERS[0]}"
+    fi
+  else
+    next="${WALLPAPERS[$(((index + offset + total) % total))]}"
+  fi
+
+  omarchy theme bg set "$next"
+  echo "$next"
+}
+
+next_wallpaper() { set_by_offset 1; }
+prev_wallpaper() { set_by_offset -1; }
+
+service_running() {
+  systemctl --user is-active --quiet "$SERVICE" 2>/dev/null
+}
+
+pause_slideshow() {
+  systemctl --user stop "$SERVICE" 2>/dev/null || true
+}
+
+resume_slideshow() {
+  systemctl --user start "$SERVICE"
+}
+
+toggle_slideshow() {
+  if service_running; then
+    pause_slideshow
+    echo "paused"
+  else
+    resume_slideshow
+    echo "running"
+  fi
+}
+
+json_escape() {
+  local s=${1//\\/\\\\}
+  s=${s//\"/\\\"}
+  s=${s//$'\n'/\\n}
+  printf '%s' "$s"
+}
+
+status_json() {
+  mapfile -d '' -t WALLPAPERS < <(list_wallpapers)
+  local total=${#WALLPAPERS[@]}
+  local current
+  current=$(current_path)
+  local index
+  index=$(wallpaper_index "$current")
+  local name=""
+  if [[ -n $current ]]; then
+    name=$(basename "$current")
+  fi
+
+  local running=false
+  local icon="󰐊"
+  local klass="inactive"
+  local state="paused"
+  if service_running; then
+    running=true
+    icon="󰏤"
+    klass="active"
+    state="running"
+  fi
+
+  local display_index=0
+  if (( index >= 0 )); then
+    display_index=$((index + 1))
+  fi
+
+  local mins=$((INTERVAL_SEC / 60))
+  local secs=$((INTERVAL_SEC % 60))
+  local interval_label
+  if (( mins > 0 && secs == 0 )); then
+    interval_label="${mins}m"
+  elif (( mins > 0 )); then
+    interval_label="${mins}m ${secs}s"
+  else
+    interval_label="${INTERVAL_SEC}s"
+  fi
+
+  local tip
+  tip=$(printf '%s\n%s\n%d / %d · every %s\nbar: prev · pause/resume · next · scroll for prev/next' \
+    "$state" "$name" "$display_index" "$total" "$interval_label")
+
+  printf '{"text":"%s","tooltip":"%s","class":"%s","running":%s,"name":"%s","path":"%s","index":%d,"total":%d,"interval":%d}\n' \
+    "$icon" \
+    "$(json_escape "$tip")" \
+    "$klass" \
+    "$running" \
+    "$(json_escape "$name")" \
+    "$(json_escape "$current")" \
+    "$display_index" \
+    "$total" \
+    "$INTERVAL_SEC"
+}
+
+usage() {
+  cat <<'EOF'
+Usage: wallpaper-slideshow <command>
+
+  --next      Next wallpaper
+  --prev      Previous wallpaper
+  --toggle    Pause or resume the slideshow service
+  --pause     Pause the slideshow service
+  --resume    Resume the slideshow service
+  --status    JSON status for the bar (default for bare call is --next)
+  --loop      Keep advancing every INTERVAL_SEC seconds (used by systemd)
+  --help      Show this help
+
+Edit ~/.config/wallpaper-slideshow.conf to change the folder or interval.
+EOF
+}
+
+cmd="${1:---next}"
+case "$cmd" in
+  --next|next)
+    next_wallpaper
+    ;;
+  --prev|prev|previous)
+    prev_wallpaper
+    ;;
+  --toggle|toggle)
+    toggle_slideshow
+    ;;
+  --pause|pause|stop)
+    pause_slideshow
+    echo "paused"
+    ;;
+  --resume|resume|start)
+    resume_slideshow
+    echo "running"
+    ;;
+  --status|status)
+    status_json
+    ;;
+  --loop|loop)
+    next_wallpaper || true
+    while true; do
+      sleep "$INTERVAL_SEC"
+      next_wallpaper || true
+    done
+    ;;
+  --help|-h|help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac

@@ -44,7 +44,8 @@ end
 
 -- Add any other personal Hyprland configuration below.
 
--- Smart gaps: no gaps when a workspace has one tiled window, or one fullscreen window.
+-- Smart gaps (i3 smart_gaps): no gaps when a workspace has one visible tiled
+-- window (w[tv1]; a hy3 tab group counts as one) or a maximized window (f[1]).
 hl.workspace_rule({ workspace = "w[tv1]", gaps_in = 0, gaps_out = 0 })
 hl.workspace_rule({ workspace = "f[1]", gaps_in = 0, gaps_out = 0 })
 
@@ -104,17 +105,7 @@ assign("(Typora|typora)", 10, true)
 assign("(plasma-systemmonitor|org\\.kde\\.plasma-systemmonitor)", 11, true)
 assign("(systemsettings|org\\.kde\\.systemsettings|kinfocenter|org\\.kde\\.kinfocenter|Firewall-config|firewall-config|Gnome-disks|org\\.gnome\\.DiskUtility|partitionmanager|org\\.kde\\.partitionmanager|GParted|gparted|com\\.github\\.tchx84\\.Flatseal|Grub-customizer|grub-customizer)", 12, true)
 
--- Dropdown terminal: Kitty on a Hyprland special workspace (native Wayland).
--- Guake/Yakuake-style apps need X11 or layer-shell hacks; Omarchy's community
--- approach is a named special workspace with slidevert animation.
--- Class must not match normal Kitty (Super+Shift+Return).
-o.window({ class = "^dropdown\\.terminal$" }, {
-  workspace = "special:dropdown silent",
-  float = true,
-  move = { 0, 0 },
-  size = { "monitor_w", "monitor_h * 0.4" },
-  opacity = "0.95 0.95",
-})
-
--- TildaZ autostart (added by "tildaz --desktop add", removed by "tildaz --desktop remove")
+-- TildaZ dropdown terminal. "tildaz --desktop add" writes hypr/tildaz.lua
+-- (autostart at login); "tildaz --desktop remove" deletes it. pcall skips it
+-- on machines without TildaZ. Toggle keys are in bindings.lua, look in looknfeel.lua.
 pcall(require, "tildaz")

@@ -1,0 +1,13 @@
+[Unit]
+Description=Wallpaper slideshow from ~/.Wallpapers
+After=graphical-session.target
+BindsTo=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/wallpaper-slideshow --loop
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=graphical-session.target

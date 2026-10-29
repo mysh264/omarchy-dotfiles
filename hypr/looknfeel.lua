@@ -32,6 +32,16 @@ hl.layer_rule({
   animation = "none",
 })
 
+-- TildaZ dropdown terminal is a layer surface (namespace tildaz), not a
+-- window, so window rules do not reach it. Blur behind its 90% opacity
+-- (opacity_percent in ~/.config/tildaz/config_0.toml) and slide it from the top.
+hl.layer_rule({
+  match = { namespace = "tildaz" },
+  blur = true,
+  ignore_alpha = 0.1,
+  animation = "slide top",
+})
+
 hl.config({
   binds = {
     -- Pressing the key for the workspace you are already on goes back.
