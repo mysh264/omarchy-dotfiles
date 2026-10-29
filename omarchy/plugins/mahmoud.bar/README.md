@@ -1,7 +1,85 @@
-# Omarchy bar
+# mahmoud.bar: cloned Omarchy bar with a peek overlay
+
+This folder is a copy of Omarchy's first-party status bar (`omarchy.bar`), made with Omarchy's own clone command. It is identical to the stock bar except for one feature: **while the bar is hidden, it can slide back in over the windows** without making them shrink. That is the "peek" you get by touching the bottom edge of the screen. The stock bar always reserves its strip when visible, so this needed a clone.
+
+Repo path `omarchy/plugins/mahmoud.bar/` → live path `~/.config/omarchy/plugins/mahmoud.bar/`. `~/.config/omarchy/shell.json` selects it with `"bar": { "id": "mahmoud.bar" }`. Widget layout (`bar.layout`) is unchanged and still lives in `shell.json`.
+
+## How it was made
+
+```bash
+omarchy plugin clone omarchy.bar     # copies the bar into ~/.config/omarchy/plugins/ and points shell.json at the clone
+omarchy plugin list                  # mahmoud.bar should be listed
+```
+
+`manifest.json` records `"clonedFrom": "omarchy.bar"`. Omarchy updates never touch this folder; you merge upstream changes yourself (below).
+
+## What changed vs the stock bar
+
+Only `Bar.qml` differs from `/usr/share/omarchy/shell/plugins/bar/` (plus the id in `manifest.json`):
+
+1. A new property:
+
+   ```qml
+   // Peek draws the bar over the windows. The bar-off flag stays set, so the
+   // bar still does not reserve a strip of the screen.
+   property bool barOverlay: false
+   ```
+
+2. A new IPC function next to `syncHidden` in the `IpcHandler` (target is still `omarchy.bar`):
+
+   ```qml
+   function setOverlay(enabled: string): void {
+     root.barOverlay = String(enabled) === "yes" || String(enabled) === "true"
+   }
+   ```
+
+3. `exclusionMode` and the off-screen margins ignore the hidden state while `barOverlay` is on:
+
+   ```qml
+   exclusionMode: (root.barHidden || root.barOverlay) ? ExclusionMode.Ignore : ExclusionMode.Auto
+   bottom: root.barHidden && !root.barOverlay && root.position === "bottom" ? -root.barSize : 0
+   ```
+
+   (and the same `!root.barOverlay` for `top`, `left`, `right`).
+
+`hypr/bindings.lua` drives it. It polls the pointer, and on the bottom 4 px while the bar is hidden it runs:
+
+```bash
+omarchy-shell -q omarchy.bar setOverlay yes   # show over the windows
+omarchy-shell -q omarchy.bar setOverlay no    # park it off screen again
+```
+
+Hiding and showing for good (`Super+M`, top-left hot corner) still use Omarchy's `~/.local/state/omarchy/toggles/bar-off` flag and `syncHidden`.
+
+## Check it works
+
+```bash
+omarchy-shell -q omarchy.bar setOverlay yes   # with the bar hidden: it appears over the windows
+omarchy-shell -q omarchy.bar setOverlay no
+```
+
+## Updating from upstream
+
+After an Omarchy update, compare with the stock bar:
+
+```bash
+diff /usr/share/omarchy/shell/plugins/bar/Bar.qml ~/.config/omarchy/plugins/mahmoud.bar/Bar.qml
+```
+
+If upstream changed more than the three spots above, the easy path is to clone again and re-apply them: `omarchy plugin clone omarchy.bar` (it creates a new clone and points `shell.json` at it), re-add the three changes, then set `bar.id` back to the id you want. `omarchy restart shell` if the shell does not pick it up.
+
+To go back to the stock bar, set `"id": "omarchy.bar"` in `shell.json` (or `omarchy bar use omarchy.bar`). The peek then does nothing; `Super+M` still hides and shows the bar.
+
+Wiki: [Status Bar](https://github.com/mysh264/omarchy-dotfiles/wiki/Status-Bar) · [Plugins](https://github.com/mysh264/omarchy-dotfiles/wiki/Plugins).
+
+---
+
+## Upstream README (Omarchy)
+
+The rest of this file is Omarchy's own README for the bar, copied by the clone. "This" below means the stock bar. Links that pointed inside Omarchy's source tree are replaced with the installed paths under `/usr/share/omarchy/`; relative paths such as `../panels/` are relative to `/usr/share/omarchy/shell/plugins/bar/`. "Users should not edit `Bar.qml`" is about the stock copy; this clone exists so it can be edited.
 
 This is the Quickshell implementation of the Omarchy status bar. It is
-shipped as a first-party plugin of [`omarchy-shell`](../../README.md), the
+shipped as a first-party plugin of `omarchy-shell` (see `/usr/share/omarchy/shell/README.md`), the
 long-running shell host. The bar is mounted at startup and lives inside
 the shell for its whole session.
 
@@ -12,9 +90,9 @@ the shell for its whole session.
 - The bar receives its config from the host shell as a `barConfig` property; the host loads it from `~/.config/omarchy/shell.json` (or `config/omarchy/shell.json` when the user has no file).
 - `omarchy bar position` updates only the user shell.json file.
 
-## Customizing
+### Customizing
 
-The bar config lives under the `bar:` key of [`~/.config/omarchy/shell.json`](../../README.md#shelljson-shape). Out of the box the shell uses [`config/omarchy/shell.json`](../../../config/omarchy/shell.json). Once you customize anything via the bar gestures, `omarchy bar ...`, or by editing shell.json directly, your file is canonical — there is no deep-merge.
+The bar config lives under the `bar:` key of `~/.config/omarchy/shell.json` (shape: "shell.json shape" in `/usr/share/omarchy/shell/README.md`). Out of the box the shell uses `/usr/share/omarchy/config/omarchy/shell.json`. Once you customize anything via the bar gestures, `omarchy bar ...`, or by editing shell.json directly, your file is canonical — there is no deep-merge.
 
 The bar is configured directly on the bar itself: drag empty bar space (or click-and-hold) to move the bar to another screen edge, double-left-click empty center-bar space to toggle transparency, and drag widgets to reorder them. The `omarchy bar position`, `omarchy bar transparent`, `omarchy bar move`, and `omarchy bar set` commands do the same from scripts. Enable or disable widgets with `omarchy plugin enable` and `omarchy plugin disable` (widget ids come from `omarchy plugin list`).
 
@@ -48,9 +126,9 @@ Example `shell.json` (bar subtree only shown):
 
 `centerAnchor` pins one center module to the exact horizontal/vertical center and flanks others around it. Set to an empty string to disable anchoring (the center list is centered as a group).
 
-## Module catalogue
+### Module catalogue
 
-### First-party interactive widgets
+#### First-party interactive widgets
 
 | Name | What it does | Interactions |
 |---|---|---|
@@ -63,7 +141,6 @@ Example `shell.json` (bar subtree only shown):
 | `omarchy.tray` | System tray | hover = reveal drawer · right on chevron = manage |
 | `omarchy.weather` | Weather icon + popup with forecast | left = popup · right = full notification |
 | `omarchy.microphone` | Mic icon + scroll volume | left = mute toggle · middle = audio panel · scroll = source volume |
-
 | `omarchy.audio` | Volume icon + popup with master slider, output-device picker, per-app mixer | left = popup · right = mute · middle = popup · scroll = volume |
 | `omarchy.network` | Wi-Fi/Ethernet icon + popup with Wi-Fi scan, signal, connect, DNS provider selection | left = popup |
 | `omarchy.tailscale` | Tailscale status, connection switcher, machine browser, and copy actions | left = popup · right = toggle · middle = refresh |
@@ -74,11 +151,11 @@ Example `shell.json` (bar subtree only shown):
 
 The `omarchy.indicators` widget loads individual bar indicators from `indicators/`. Omit `items` (or set it to an empty array) to show all indicators in the default order, or set `items` to a subset such as `["Dnd", "Reminder", "NightLight"]`. Set `alwaysShow` to `true` to keep inactive indicators visible instead of revealing them only on hover. Multiple `omarchy.indicators` instances are allowed, so different sections can show different subsets.
 
-## Orientation
+### Orientation
 
 All widgets work in `top`, `bottom`, `left`, and `right` positions. Popups anchor on the side opposite the bar edge, sliding into the workspace. Vertical bars use 28px width; widgets that show text fall back to compact icon-only forms (e.g. `media` hides its scrolling label).
 
-## Custom user modules
+### Custom user modules
 
 The schema accepts arbitrary module ids that you provide. Set `type` to `command` for shell-driven output or `qml` for a custom QML widget. Both still go under `bar.layout.<section>` in `shell.json`.
 
@@ -151,7 +228,7 @@ Item {
 }
 ```
 
-## Bar properties available to widgets
+### Bar properties available to widgets
 
 Widgets receive `bar` (the shell root), `moduleName` (string), and `settings` (object) injected at load time. The bar exposes:
 
@@ -178,6 +255,6 @@ namespaced ids.
 Third-party widgets ship as separate plugins under
 `~/.config/omarchy/plugins/<plugin-id>/` with their own `manifest.json`
 declaring `kinds: ["bar-widget"]` and a `barWidget` entry point. See
-[../../README.md](../../README.md) for the manifest schema. Rescan, enable,
+`/usr/share/omarchy/shell/README.md` for the manifest schema. Rescan, enable,
 and place third-party plugins with `omarchy-shell shell rescanPlugins`,
 `omarchy plugin enable`, and `omarchy bar move`.

@@ -23,7 +23,8 @@ If you are new to Hyprland concepts (reload, monitors, binds), start with [Learn
 ├── bindings/          # stock keybindings (utilities.lua = menu, capture, …)
 ├── apps/
 ├── looknfeel.lua
-├── toggles/           # per-workspace layout saves, etc.
+├── toggles.lua        # loads generated toggles (no-gaps, …) + saved Super+L layouts
+├── workspace-layouts.lua
 └── …
 
 ~/.config/hypr/
@@ -32,7 +33,8 @@ If you are new to Hyprland concepts (reload, monitors, binds), start with [Learn
 ├── input.lua
 ├── looknfeel.lua
 ├── bindings.lua
-└── autostart.lua
+├── autostart.lua
+└── tildaz.lua        # written by `tildaz --desktop add` (this rice only)
 ```
 
 **Golden rule:** discover stock behavior under `/usr/share/omarchy/…`, then **unbind + rebind** in `~/.config/hypr/bindings.lua`. Never patch the package tree.
@@ -53,7 +55,7 @@ require("hypr.looknfeel")
 require("hypr.bindings")
 require("hypr.autostart")
 
-require("default.hypr.toggles")   -- restores saved per-workspace layouts
+require("default.hypr.toggles")   -- Omarchy toggles + saved per-workspace layouts
 -- then your workspace rules / assign() / window rules…
 ```
 
@@ -72,18 +74,20 @@ Optional flags (in `hyprland.lua` comments):
 |--------|---------|---------|
 | `o.bind(key, label, action)` | Bind + show in Omarchy cheatsheet | `o.bind("SUPER + D", "Omarchy menu", "omarchy-menu toggle")` |
 | `o.window(class, opts)` | Window rule | `o.window("mpv", { workspace = "5 silent" })` |
-| `o.exec_on_start(cmd)` | Shell once at login | Conky, `hyprpm reload` |
-| `o.launch_on_start(cmd)` | App at login (uwsm-friendly) | Dropdown Kitty |
+| `o.exec_on_start(cmd)` | Shell command once at login | Conky, `hyprpm reload && hyprctl reload` |
+| `o.launch_on_start(cmd)` | Same, wrapped as `uwsm-app -- cmd` | `o.launch_on_start("hyprsunset")` |
 | `{ launch = "app" }` | Launch via Omarchy/uwsm | `{ launch = "konsole" }` |
 | `hl.config({…})` | Hyprland settings | gaps, blur, input |
+| `hl.workspace_rule({…})` | Per-workspace settings | smart gaps (`w[tv1]`), names, layout |
+| `hl.layer_rule({…})` | Rules for layer surfaces (bar, TildaZ) | blur, animation |
 | `hl.dispatch(…)` | One-shot compositor action | focus workspace |
 | `hl.unbind(key)` | Remove existing bind | Before rebinding Omarchy keys |
 | `hl.plugin.hy3` | hy3 API when plugin loaded | `hy3.move_focus("l")` |
 
-List cheatsheet labels:
+See every bind with its label: press **Super+K** (Omarchy's keybindings menu), or run:
 
 ```bash
-omarchy menu keybindings --print
+hyprctl binds
 ```
 
 ---
@@ -97,8 +101,7 @@ Stock Omarchy binds the menu on **Super+Space** (in packaged `bindings/utilities
 1. Confirm stock (read-only):
 
 ```bash
-rg -n "Omarchy menu" /usr/share/omarchy/default/hypr/bindings/ || true
-omarchy menu keybindings --print | rg -i menu
+grep -rn "Omarchy menu" /usr/share/omarchy/default/hypr/bindings/
 ```
 
 2. In `~/.config/hypr/bindings.lua`:
@@ -113,7 +116,7 @@ o.bind("SUPER + D", "Omarchy menu", "omarchy-menu toggle")
 ```bash
 hyprctl reload
 hyprctl configerrors
-hyprctl binds | rg -A2 'Omarchy menu'
+hyprctl binds | grep -B3 -A3 'Omarchy menu'
 ```
 
 You should see Super+D, not Super+Space, for the menu.
@@ -129,8 +132,8 @@ hl.config({
   general = {
     gaps_in = 8,
     gaps_out = 3,
-    border_size = 0,
-    layout = "hy3",  -- only if hy3 is loaded
+    border_size = 5,
+    -- leave layout alone here unless hy3 is loaded; see Look and Feel
   },
 })
 ```
@@ -154,7 +157,7 @@ local function assign(class, workspace, focus)
   })
 end
 
-assign("(dolphin|org%.kde%.dolphin)", 4, false)  -- open on 4, stay here
+assign("(dolphin|org\\.kde\\.dolphin)", 4, false)  -- open on 4, stay here
 ```
 
 3. Reload; open Dolphin from another workspace — it should land on 4 without stealing focus if `focus = false`.
@@ -227,7 +230,8 @@ omarchy theme list|current|set|refresh|bg next
 omarchy bar position|move|transparent|set
 omarchy plugin list|enable|disable|clone
 omarchy menu toggle
-omarchy menu keybindings --print
+omarchy menu keybindings         # same menu as Super+K
+omarchy toggle nightlight
 omarchy-capture-screenshot fullscreen
 ```
 
@@ -237,6 +241,7 @@ omarchy-capture-screenshot fullscreen
 
 | Goal | Page |
 |------|------|
+| Map your i3 config onto this | [Coming from i3](Coming-from-i3) |
 | Rebuild this rice in order | [Build This Rice](Build-This-Rice) |
 | Every key in this keymap | [Keybinding Cheatsheet](Keybinding-Cheatsheet) |
 | hy3 glass + auto tabs | [Look and Feel](Look-and-Feel) |

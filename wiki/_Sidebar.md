@@ -1,13 +1,18 @@
 **[Home](Home)**
 
+**[Coming from i3](Coming-from-i3)**
+
 ---
+
+**Start here**
+* [Coming from i3](Coming-from-i3)
+* [Installation](Installation)
+* [Golden Rules](Golden-Rules)
+* [Build This Rice](Build-This-Rice)
 
 **Learn (step by step)**
 * [Learn Hyprland](Learn-Hyprland)
 * [Learn Omarchy Hyprland](Learn-Omarchy-Hyprland)
-* [Build This Rice](Build-This-Rice)
-* [Golden Rules](Golden-Rules)
-* [Installation](Installation)
 * [Repo Layout](Repo-Layout)
 * [Arch Linux](Arch-Linux)
 
@@ -18,7 +23,7 @@
 * [Look and Feel](Look-and-Feel)
 * [Autostart](Autostart)
 * [Monitors and Input](Monitors-and-Input)
-* [Dropdown Terminal](Dropdown-Terminal)
+* [Dropdown Terminal (TildaZ)](Dropdown-Terminal)
 * [Screenshots](Screenshots)
 * [Night Light and Portal](Night-Light-and-Portal)
 * [Per-window Keyboard](Per-Window-Keyboard)
@@ -26,9 +31,9 @@
 
 **Shell & bar**
 * [Status Bar](Status-Bar)
+* [Plugins](Plugins)
 * [Hardware Stats](Hardware-Stats)
 * [Wallpaper Widget](Wallpaper-Widget)
-* [Plugins](Plugins)
 * [Menu Extensions](Menu-Extensions)
 * [Themes and Fonts](Themes-and-Fonts)
 

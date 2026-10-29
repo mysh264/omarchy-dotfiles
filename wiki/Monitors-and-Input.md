@@ -47,17 +47,19 @@ Reload: `hyprctl reload && hyprctl configerrors`.
 **Repo:** `hypr/input.lua`  
 **Live:** `~/.config/hypr/input.lua`
 
-Keep **only personal overrides** here. Uncommented settings replace Omarchy defaults.
+Keep **only personal overrides** here. Uncommented settings replace Omarchy defaults. In i3 this was your `setxkbmap` line and `focus_follows_mouse`.
+
+Note: the comment above `kb_layout` in the file still says "switch between them with Left Alt + Right Alt". That is out of date; the active option is `grp:win_space_toggle` (Win+Space).
 
 ### Shipped keyboard
 
 | Setting | Value | Meaning |
 |---------|-------|---------|
 | `kb_layout` | `us,ara` | US + Arabic |
-| `kb_options` | `grp:win_space_toggle` | **Win+Space** cycles layouts |
+| `kb_options` | `grp:win_space_toggle` | **Win+Space** cycles layouts. This works because `bindings.lua` unbinds Omarchy's Super+Space menu (now Super+D) |
 | `kb_variant` | *(commented out)* | Plain US. Uncomment `kb_variant = "intl"` for US-International (dead keys for accents) |
-| `resolve_binds_by_sym` | `0` | Prefer keycodes for binds |
-| `follow_mouse` | `1` | Focus follows mouse (Omarchy-style) |
+| `resolve_binds_by_sym` | `0` | Binds act as if the first layout (`us`) is active, so Super+letter binds keep working while Arabic is on |
+| `follow_mouse` | `1` | Focus follows the mouse (i3's `focus_follows_mouse yes`) |
 
 Commented alternatives in the file:
 
@@ -79,10 +81,14 @@ kb_options = "grp:win_space_toggle",
 
 Or use Omarchy / system settings where available, then mirror into this file so reinstalls stay consistent.
 
+The dropdown terminal's hotkey is the one thing a non-Latin layout can break: keep it an F-key. See [Dropdown Terminal](Dropdown-Terminal#keep-the-hotkey-on-an-f-key).
+
 ### After edits
 
 ```bash
 hyprctl reload && hyprctl configerrors
+hyprctl getoption input:kb_layout       # us,ara
+hyprctl devices | grep -A6 'Keyboards' # active keymap per keyboard
 ```
 
-Optional per-window layout daemon (AUR): `hypr-kblayoutd-bin` — see [Installation](Installation).
+Want each window to remember its own layout? See [Per-Window Keyboard](Per-Window-Keyboard).

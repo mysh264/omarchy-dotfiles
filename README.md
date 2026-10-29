@@ -1,408 +1,142 @@
-# Omarchy Dotfiles — i3-style Hyprland + custom bar
+# Omarchy Dotfiles: i3-style Hyprland
 
-> Portable **user** configs for [Omarchy](https://omarchy.org) **and baseline [Arch Linux](https://archlinux.org/)**: hy3 (i3 containers & tabs), a remapped keymap, bottom status bar with hardware stats, dual-stack-friendly network widget, dropdown Kitty, Conky autostart, and screenshot binds that feel familiar.
+> My [Omarchy](https://omarchy.org) desktop, tuned to feel like the **i3wm** setup I used for years: i3 containers, splits and tabs via [hy3](https://github.com/outfoxxed/hy3), my old i3 keys, named workspaces with icons, apps that land on their own workspace, and a Quake-style dropdown terminal ([TildaZ](https://github.com/ensky0/tildaz)). It runs on Omarchy and on plain Arch.
 
 [![Omarchy](https://img.shields.io/badge/Omarchy-4.x-black.svg)](https://github.com/omacom/omarchy)
 [![Arch Linux](https://img.shields.io/badge/Arch-Linux-1793D1.svg)](https://archlinux.org/)
 [![Hyprland](https://img.shields.io/badge/Hyprland-Lua-blue.svg)](https://wiki.hypr.land/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Use this to clone the same desktop onto another **Omarchy** laptop **or** a plain **Arch** install — or steal the pieces you like.
+Clone the whole desktop onto another laptop, or take only the pieces you like. Everything is a user override in `~/.config/`, the Omarchy way. Nothing here touches `/usr/share/omarchy/`.
 
-> **Full wiki:** step-by-step Hyprland + Omarchy config guides and every feature — [`wiki/Home.md`](wiki/Home.md) or **https://github.com/mysh264/omarchy-dotfiles/wiki** (start with Learn Hyprland → Learn Omarchy Hyprland → Build This Rice).
+**Full guide: the [wiki](https://github.com/mysh264/omarchy-dotfiles/wiki).** Coming from i3? Start with [Coming from i3](https://github.com/mysh264/omarchy-dotfiles/wiki/Coming-from-i3).
 
-
-> **Credit — Omarchy**  
+> **Credit: Omarchy**  
 > This repository is **not** Omarchy. It is a personal / shared layer of configs that sit on top of it.  
 > **Omarchy** is created by **[David Heinemeier Hansson](https://dhh.dk/)** and the **Omarchy / Omacom** team.  
 > Upstream: **[github.com/omacom/omarchy](https://github.com/omacom/omarchy)** · Site: **[omarchy.org](https://omarchy.org)**  
 > Always prefer Omarchy’s own docs and `omarchy` CLI for system features. Never edit `/usr/share/omarchy/` — updates overwrite it.
 
-Also thanks to:
+---
 
-- [outfoxxed/hy3](https://github.com/outfoxxed/hy3) — i3-style layout plugin for Hyprland  
-- [jxai/lean-conky-config](https://github.com/jxai/lean-conky-config) / [mysh264/lean-conky-config](https://github.com/mysh264/lean-conky-config) — optional desktop panel  
-- [Hyprland](https://hypr.land/) and the Quickshell ecosystem that powers Omarchy’s shell
+## Why
+
+i3 got the important things right: windows live in containers you split and tab from the keyboard, every app has its workspace, and the config is one text file you own. Omarchy gets the rest right: a good-looking Hyprland desktop, a real CLI, and a clean place for your own overrides that survives updates.
+
+This repo joins the two. Omarchy stays in charge of the system. The files here make Hyprland behave like i3.
+
+| In i3 you had… | Here it is… |
+|----------------|-------------|
+| `~/.config/i3/config` | `~/.config/hypr/*.lua`, loaded after Omarchy's defaults |
+| `split h` / `split v` / `layout toggle tabbed split` | hy3 on `Super+H` / `Super+V` / `Super+W` |
+| `bindsym` / `bindcode` | `o.bind("SUPER + RETURN", …)` / `o.bind("SUPER + code:24", …)` |
+| `assign [class="…"] 2` | `assign("class-regex", 2, focus)` in `hyprland.lua` |
+| named workspaces like `"1: >_"` | `workspace_names` in `hyprland.lua`, shown on the bar |
+| a Quake terminal script | TildaZ on `F1` |
+| `reload` | `hyprctl reload && hyprctl configerrors` |
+
+The full mapping is in [Coming from i3](https://github.com/mysh264/omarchy-dotfiles/wiki/Coming-from-i3) and [Keybindings](https://github.com/mysh264/omarchy-dotfiles/wiki/Keybindings).
 
 ---
 
 ## What you get
 
-| Area | What changed |
-|------|----------------|
-| **Layout** | [hy3](https://github.com/outfoxxed/hy3) splits + tabs (i3 feel), delayed load so NVIDIA cold-start does not deadlock |
-| **Keys** | i3-ish focus/move/split/tab binds; Omarchy menu on `SUPER+D`; screenshots on `SUPER+S` / `SUPER+SHIFT+S` |
-| **Bar** | Bottom bar (`mahmoud.bar`), hardware stats, wallpaper control, cloned network panel |
-| **Autostart** | hy3 reload, Lean Conky, dropdown Kitty (`special:dropdown`) |
-| **Input** | `us,ara` layouts, `Win+Space` to toggle |
-| **Windows** | Named workspaces + app → workspace assignments (Brave, Dolphin, mpv, …) |
+| Area | What it does | Wiki |
+|------|--------------|------|
+| **Layout** | hy3 splits and tabs. One window has no title bar; a second window turns the container into tabs. hy3 loads after login so an NVIDIA cold start does not deadlock | [Hyprland Core](https://github.com/mysh264/omarchy-dotfiles/wiki/Hyprland-Core) |
+| **Keys** | i3 focus / move / split / tab keys, Omarchy menu on `Super+D`, numpad workspace keys, hot corners | [Keybindings](https://github.com/mysh264/omarchy-dotfiles/wiki/Keybindings) · [Cheatsheet](https://github.com/mysh264/omarchy-dotfiles/wiki/Keybinding-Cheatsheet) |
+| **Workspaces** | 12 named workspaces with icons. Brave/Firefox, Dolphin, mpv, Viewnior and others open on their own workspace | [Hyprland Core](https://github.com/mysh264/omarchy-dotfiles/wiki/Hyprland-Core) |
+| **Dropdown terminal** | [TildaZ](https://github.com/ensky0/tildaz) on `F1` (also the Favorites key, KP Delete, mouse forward). Slides in from the top with blur | [Dropdown Terminal](https://github.com/mysh264/omarchy-dotfiles/wiki/Dropdown-Terminal) |
+| **Look** | Glass hy3 tabs with a red active outline, blurred bar, no gaps around a lone window | [Look and Feel](https://github.com/mysh264/omarchy-dotfiles/wiki/Look-and-Feel) |
+| **Status bar** | Bottom bar (cloned as `mahmoud.bar`) that peeks from the bottom edge while hidden, named-workspace widget, hardware stats, wallpaper control, cloned network panel | [Status Bar](https://github.com/mysh264/omarchy-dotfiles/wiki/Status-Bar) · [Plugins](https://github.com/mysh264/omarchy-dotfiles/wiki/Plugins) |
+| **Screenshots** | `Super+S` full screen, `Super+Shift+S` focused window | [Screenshots](https://github.com/mysh264/omarchy-dotfiles/wiki/Screenshots) |
+| **Input** | `us` + `ara` layouts, `Win+Space` toggles, optional per-window layout | [Monitors and Input](https://github.com/mysh264/omarchy-dotfiles/wiki/Monitors-and-Input) · [Per-Window Keyboard](https://github.com/mysh264/omarchy-dotfiles/wiki/Per-Window-Keyboard) |
+| **Extras** | Lean Conky desktop panel, night light, Alacritty font size, menu extensions | [Conky](https://github.com/mysh264/omarchy-dotfiles/wiki/Conky) · [Autostart](https://github.com/mysh264/omarchy-dotfiles/wiki/Autostart) · [Menu Extensions](https://github.com/mysh264/omarchy-dotfiles/wiki/Menu-Extensions) |
 
-Deep step-by-step for the Hyprland / hy3 half lives in **[docs/hypr-i3-setup.md](docs/hypr-i3-setup.md)**.  
-Baseline Arch walkthrough: **[docs/arch-linux.md](docs/arch-linux.md)**.
+## Screenshots
 
----
-
-## Pick your OS
-
-| You have… | Do this |
-|-----------|---------|
-| **Omarchy OS** | Clone → `./install.sh` |
-| **Arch / EndeavourOS / CachyOS** | Clone → `./scripts/setup-arch-omarchy-stack.sh` → log out/in → `./install.sh --target arch` |
-
-**Not zero-config on EndeavourOS or CachyOS.** They are Arch-based (`ID_LIKE=arch`), so the same stack script works, but a stock install does **not** ship Omarchy’s shell/Lua helpers. You still run the setup once.
-
-The Arch-family path layers Omarchy’s desktop packages (Hyprland helpers, Quickshell bar, `omarchy-*` tools) from [pkgs.omarchy.org](https://pkgs.omarchy.org) **without** installing Limine or replacing your bootloader. Full detail in [docs/arch-linux.md](docs/arch-linux.md).
+A dark Catppuccin desktop: a thin blurred bar along the bottom with icon-named workspaces on the left, hy3 tabs as a slim glass strip above each tab group, and a translucent TildaZ terminal that drops down from the top on `F1`. Pictures will follow.
 
 ---
 
-## Quick install — Omarchy OS
+## Quick install
 
-### 0. Prerequisites
+`install.sh` writes only under `~/.config/` and `~/.local/` (TildaZ, the wallpaper script), and creates `~/.Wallpapers`. Every file it replaces is first copied to `~/.config/omarchy-dotfiles-backup-YYYYMMDD-HHMMSS/`. Preview everything with `--dry-run`.
 
-1. Fresh **[Omarchy](https://omarchy.org)** install (or an existing one you’re okay customizing).
-2. Packages this keymap expects (adjust to taste):
+### On Omarchy
 
 ```bash
-sudo pacman -S --needed hyprpm konsole kitty dolphin brave firefox \
-  viewnior gwenview
-# optional: voice dictation, Conky later via --with-conky
+# Apps the keymap launches (adjust to taste)
+sudo pacman -S --needed hyprpm konsole kitty dolphin brave-bin firefox viewnior gwenview
+
+git clone https://github.com/mysh264/omarchy-dotfiles.git ~/Documents/GitHub/omarchy-dotfiles
+cd ~/Documents/GitHub/omarchy-dotfiles
+./install.sh --dry-run    # see what it would do
+./install.sh              # configs + hy3 + wallpaper slideshow + TildaZ
 ```
 
-### 1. Clone & install
+Options: `--skip-hy3`, `--skip-tildaz`, `--skip-wallpaper`, `--with-conky`, `--target auto|omarchy|arch`. `./install.sh --help` lists them.
+
+### On Arch, EndeavourOS or CachyOS
+
+These do not ship Omarchy's shell and Lua helpers, so you add them once. The script adds the `[omarchy]` repo and its desktop packages **without** replacing your bootloader.
 
 ```bash
 git clone https://github.com/mysh264/omarchy-dotfiles.git ~/Documents/GitHub/omarchy-dotfiles
 cd ~/Documents/GitHub/omarchy-dotfiles
-chmod +x install.sh
-./install.sh                 # backs up existing files, copies configs, enables hy3
-# ./install.sh --with-conky  # also clones Wayland Lean Conky Config
-# ./install.sh --dry-run     # preview only
-```
-
-`install.sh` only writes under `~/.config/`. Anything it replaces is copied to  
-`~/.config/omarchy-dotfiles-backup-YYYYMMDD-HHMMSS/`.
-
-### 2. Adapt this machine
-
-```bash
-$EDITOR ~/.config/hypr/monitors.lua   # your panel / scale / refresh
-$EDITOR ~/.config/hypr/input.lua      # keyboard layouts & touchpad
-hyprctl reload && hyprctl configerrors
-omarchy restart shell
-```
-
-Monitors and keyboards differ per laptop — do not blindly reuse another machine’s `monitors.lua`.
-
----
-
-## Quick install — baseline Arch Linux
-
-```bash
-# 1) Arch is installed (archinstall or manual), user + sudo + network OK
-git clone https://github.com/mysh264/omarchy-dotfiles.git ~/Documents/GitHub/omarchy-dotfiles
-cd ~/Documents/GitHub/omarchy-dotfiles
-chmod +x scripts/setup-arch-omarchy-stack.sh install.sh
-
-# 2) Add Omarchy repo + desktop stack (keeps YOUR bootloader)
-./scripts/setup-arch-omarchy-stack.sh
-# log out / reboot so ~/.config/environment.d is loaded
-
-# 3) Apply this rice
+./scripts/setup-arch-omarchy-stack.sh   # once; then log out and back in
 ./install.sh --target arch
-# ./install.sh --target arch --with-conky
-
-# 4) Per-laptop tweaks
-$EDITOR ~/.config/hypr/monitors.lua
-$EDITOR ~/.config/hypr/input.lua
-hyprctl reload && hyprctl configerrors
 ```
 
-Package checklist: [packages.arch.txt](packages.arch.txt). Deep dive: [docs/arch-linux.md](docs/arch-linux.md).
+Details: [Arch Linux](https://github.com/mysh264/omarchy-dotfiles/wiki/Arch-Linux) · [docs/arch-linux.md](docs/arch-linux.md) · [packages.arch.txt](packages.arch.txt).
+
+### Then make it yours
+
+Screens and keyboards differ per laptop. Do not reuse another machine's `monitors.lua` as is.
+
+```bash
+$EDITOR ~/.config/hypr/monitors.lua      # hyprctl monitors all shows your outputs
+$EDITOR ~/.config/hypr/input.lua         # layouts, touchpad
+hyprctl reload && hyprctl configerrors   # configerrors must print nothing
+```
+
+Step by step with checks: [Installation](https://github.com/mysh264/omarchy-dotfiles/wiki/Installation). Build it yourself from stock Omarchy: [Build This Rice](https://github.com/mysh264/omarchy-dotfiles/wiki/Build-This-Rice).
 
 ---
 
-## Optional extras (both OSes)
+## Where things live
 
-```bash
-# Per-window keyboard language (if you use it)
-# yay -S hypr-kblayoutd-bin
-# systemctl --user enable --now hypr-kblayoutd.service
+| Repo | Installed to | What |
+|------|--------------|------|
+| `hypr/` | `~/.config/hypr/` | Hyprland Lua: keys, layout, rules, autostart, monitors, input |
+| `omarchy/` | `~/.config/omarchy/` | `shell.json` bar layout, cloned plugins, bar scripts, menu extensions |
+| `tildaz/` | `~/.config/tildaz/` | TildaZ settings (`F1`, size, font) |
+| `alacritty/` | `~/.config/alacritty/` | Alacritty font size |
+| `docs/` | — | Long-form [i3 → hy3 guide](docs/hypr-i3-setup.md) and [Arch notes](docs/arch-linux.md) |
+| `wiki/` | GitHub wiki | Source of the wiki pages |
 
-# Lean Conky (Wayland) — or use ./install.sh --with-conky
-git clone https://github.com/mysh264/lean-conky-config.git ~/.config/conky
-cp ~/.config/conky/local.conf.wayland.example ~/.config/conky/local.conf
-~/.config/conky/start-lcc.sh -n
-```
+Full tree: [Repo Layout](https://github.com/mysh264/omarchy-dotfiles/wiki/Repo-Layout). The rules that keep Omarchy updates painless: [Golden Rules](https://github.com/mysh264/omarchy-dotfiles/wiki/Golden-Rules).
 
----
+## Learn as you go
 
-## Repo layout
+New to Hyprland, or to how Omarchy layers its config? These pages explain the moving parts before you change them:
 
-```text
-omarchy-dotfiles/
-├── hypr/                 → ~/.config/hypr/
-│   ├── hyprland.lua      # loads Omarchy defaults + your modules
-│   ├── bindings.lua      # keymap, hot corners, bar peek, screenshots
-│   ├── looknfeel.lua     # gaps, blur, hy3 tab glass
-│   ├── autostart.lua     # hy3 reload, Conky, dropdown Kitty
-│   ├── input.lua         # keyboard / pointer
-│   ├── monitors.lua      # displays (edit per laptop)
-│   └── scripts/          # focused-window screenshot helper
-├── omarchy/              → ~/.config/omarchy/
-│   ├── shell.json        # bar layout, idle lock timings
-│   ├── shell.toml        # shell font size
-│   ├── plugins/          # mahmoud.bar, mahmoud.network, mahmoud.workspaces (cloned)
-│   ├── bar/              # hw-stats script + wallpaper QML module
-│   ├── themed/           # shell.toml.tpl override
-│   └── extensions/       # omarchy-menu.jsonc
-├── alacritty/            → ~/.config/alacritty/ (font size 11)
-├── scripts/
-│   └── setup-arch-omarchy-stack.sh   # Arch: Omarchy repo + packages
-├── docs/
-│   ├── arch-linux.md     # baseline Arch walkthrough
-│   └── hypr-i3-setup.md  # long-form hy3 + keymap guide
-├── packages.arch.txt
-├── install.sh            # --target auto|omarchy|arch
-└── LICENSE
-```
+- [Learn Hyprland](https://github.com/mysh264/omarchy-dotfiles/wiki/Learn-Hyprland)
+- [Learn Omarchy Hyprland](https://github.com/mysh264/omarchy-dotfiles/wiki/Learn-Omarchy-Hyprland)
+- [Coming from i3](https://github.com/mysh264/omarchy-dotfiles/wiki/Coming-from-i3)
+- [docs/hypr-i3-setup.md](docs/hypr-i3-setup.md): the long version of how this machine was built, step by step
 
----
-
-## How to edit each feature
-
-Omarchy rule of thumb: **edit `~/.config/…` only**. After Hyprland Lua edits:
-
-```bash
-hyprctl reload
-hyprctl configerrors    # must print nothing
-```
-
-Bar / `shell.json` usually hot-reloads on save; force with `omarchy restart shell`.
-
-### Keybindings
-
-**File:** `hypr/bindings.lua` → `~/.config/hypr/bindings.lua`
-
-1. Check what Omarchy already bound: `omarchy menu keybindings --print`
-2. Always `hl.unbind("SUPER + …")` (or the helper `unbind`) **before** rebinding a key Omarchy owns
-3. Prefer `o.bind("SUPER + X", "Label", …)` so the binding shows up in Omarchy’s cheatsheet
-
-Useful binds in this tree:
-
-| Shortcut | Action |
-|----------|--------|
-| `SUPER+Return` | Konsole |
-| `SUPER+Shift+Return` | Kitty |
-| `SUPER+D` | Omarchy menu |
-| `SUPER+S` | Fullscreen screenshot |
-| `SUPER+Shift+S` | Focused-window screenshot |
-| `SUPER+M` | Toggle / peek status bar |
-| `SUPER+H / V / W / E` | hy3 split / tab / opposite |
-| `SUPER+Arrows` | Focus (hy3) |
-| `SUPER+Shift+Arrows` | Move window (hy3) |
-| Favorites / KP Delete / mouse forward | Dropdown terminal ([TildaZ](https://github.com/ensky0/tildaz); see [wiki → Dropdown Terminal](https://github.com/mysh264/omarchy-dotfiles/wiki/Dropdown-Terminal)) |
-
-Screenshots: fullscreen uses Omarchy’s capture helper; focused window uses `hypr/scripts/screenshot-focused`.
-
-### Layout, gaps, hy3 tab look
-
-**File:** `hypr/looknfeel.lua`
-
-- `general.gaps_in` / `gaps_out` / `border_size` / `layout`
-- `decoration.blur` — needed for frosted hy3 tabs and bar glass
-- `plugin.hy3.tabs.*` — height, padding, colors (active red outline)
-
-NVIDIA note: do **not** force-load hy3 inside `hyprland.lua` on cold start on affected GPUs. This setup loads via `autostart.lua` (`hyprpm reload && hyprctl reload`). Details in `docs/hypr-i3-setup.md`.
-
-### No gaps for a single window
-
-**File:** `hypr/hyprland.lua`
-
-```lua
-hl.workspace_rule({ workspace = "w[tv1]", gaps_in = 0, gaps_out = 0 })
-hl.workspace_rule({ workspace = "f[1]", gaps_in = 0, gaps_out = 0 })
-```
-
-A workspace with one visible tiled window (a hy3 tab group counts as one) or one fullscreen window gets no gaps. Split windows keep the `gaps_in` / `gaps_out` from `hypr/looknfeel.lua`.
-
-**Do not press `Super+Shift+Backspace` for this.** That is Omarchy's global "Toggle window gaps". It writes `~/.local/state/omarchy/toggles/hypr/window-no-gaps.lua`, which loads after your files and sets gaps **and** `border_size` to 0 for every window. Split windows then touch with no gaps. Turn it off with the same keys or `omarchy-hyprland-window-gaps-toggle`.
-
-### Window rules & workspace names
-
-**File:** `hypr/hyprland.lua`
-
-- `workspace_names` — icons/labels for workspaces 1–12  
-- `assign("class-regex", workspace, focus?)` — sticky app → workspace rules  
-- Special cases: tiled `mpv`, Viewnior without cursor warp, dropdown terminal opacity  
-
-### Autostart
-
-**File:** `hypr/autostart.lua`
-
-```lua
-o.exec_on_start("hyprpm reload && hyprctl reload")
-o.exec_on_start((os.getenv("HOME") or "") .. "/.config/conky/start-lcc.sh")
-o.launch_on_start("kitty --class dropdown.terminal")
-```
-
-Remove the Conky line if you do not use it. Dropdown class must stay `dropdown.terminal` to match the window rule in `hyprland.lua`.
-
-### Monitors
-
-**File:** `hypr/monitors.lua`
-
-```bash
-hyprctl monitors all
-```
-
-Then set `output`, `mode`, `position`, `scale` for each panel. Leave commented examples as a template.
-
-### Keyboard & touchpad
-
-**File:** `hypr/input.lua`
-
-Current defaults: `kb_layout = "us,ara"`, toggle with `Win+Space` (`grp:win_space_toggle`), no variant (uncomment `kb_variant = "intl"` for US-International). Uncomment the touchpad / sensitivity blocks as needed.
-
-### Status bar layout
-
-**File:** `omarchy/shell.json` → `~/.config/omarchy/shell.json`
-
-- `bar.position` — `bottom` / `top` / …  
-- `bar.layout.left|center|right` — widget ids in order  
-- `bar.id` — `mahmoud.bar` (cloned bar plugin)  
-- `idle.lock` / `idle.screensaver` — seconds  
-
-CLI helpers:
-
-```bash
-omarchy bar position bottom
-omarchy bar move omarchy.clock --section right
-omarchy plugin list
-```
-
-### Hardware stats widget
-
-**Files:** `omarchy/bar/scripts/hw-stats` + entry in `shell.json`
-
-JSON text for the bar: CPU °C / MHz / %, GPU (NVIDIA via `nvidia-smi`, or “sleep”), load, RAM, swap. Click opens `btop`. Edit the Python script to change formatting; keep `interval` in `shell.json`.
-
-### Wallpaper control on the bar
-
-**File:** `omarchy/bar/modules/wallpaper.qml`  
-Wired as `{ "id": "wallpaper", "type": "qml" }` in `shell.json`. Change icons / actions inside the QML module; shell rescans plugins on save.
-
-### Network panel (cloned)
-
-**Dir:** `omarchy/plugins/mahmoud.network/`  
-Cloned from Omarchy’s network widget via `omarchy plugin clone`. Safe to edit; package updates will not overwrite it. Re-clone if you want to start from a newer upstream:
-
-```bash
-omarchy plugin clone omarchy.network
-# then point shell.json at the new id, or keep mahmoud.network
-```
-
-### Workspaces widget (cloned)
-
-**Dir:** `omarchy/plugins/mahmoud.workspaces/`  
-Omarchy's stock widget always shows 1–5, adds only workspaces that exist (up to 10), and shows bare numbers. This clone always shows workspaces 1–7, adds 8–12 only while they hold a window or you are on them, and labels each one with its name from `workspace_names` in `hypr/hyprland.lua` (for example `1: >_`). The current workspace is highlighted and empty ones are dimmed.
-
-How it was made:
-
-```bash
-omarchy plugin clone omarchy.workspaces   # copies it and switches shell.json to mahmoud.workspaces
-# then edit ~/.config/omarchy/plugins/mahmoud.workspaces/Workspaces.qml
-omarchy restart shell                     # if the hot reload does not pick it up
-```
-
-- **Names / icons:** edit only the `workspace_names` table in `hypr/hyprland.lua`. The widget reads that file and watches it, so empty and occupied workspaces always show the same icon.  
-- **How many are shown:** `readonly property int alwaysShown: 7` at the top of `Workspaces.qml`.  
-
-Details: [wiki → Plugins](https://github.com/mysh264/omarchy-dotfiles/wiki/Plugins).
-
-To go back to the stock widget, set the id in `shell.json` to `omarchy.workspaces`.
-
-### Cloned bar engine
-
-**Dir:** `omarchy/plugins/mahmoud.bar/`  
-Same idea — local fork of the first-party bar. Prefer changing `shell.json` for layout; only edit QML when you need widget behavior Omarchy does not expose.
-
-### Shell font / theme template
-
-- `omarchy/shell.toml` — e.g. `[font] base-size = 14`  
-- `omarchy/themed/shell.toml.tpl` — template override applied when themes regenerate shell chrome  
-
-Theme commands stay Omarchy’s:
-
-```bash
-omarchy theme list
-omarchy theme current
-omarchy theme set "Catppuccin"
-omarchy theme bg next
-```
-
-### Terminal font
-
-**File:** `alacritty/alacritty.toml` — font `size = 11` (stock is often `9`). Other terminals (`foot`, `kitty`, `ghostty`) are theme-managed; tweak via Omarchy theme / their own configs if needed.
-
-### Default agent
-
-**File:** `omarchy/defaults/agent` — currently `claude`. Change to whatever `omarchy-default-agent` accepts on your build, or delete to get Omarchy’s setup invitation again.
-
-### Night light / portal
-
-- `hypr/hyprsunset.conf` — blue light filter; apply with `omarchy restart hyprsunset`  
-- `hypr/xdph.conf` — XDG desktop portal / screencast tokens; applies after portal restart / next login  
-
----
-
-## Updating later
-
-On the laptop that “owns” the rice:
-
-```bash
-cd ~/Documents/GitHub/omarchy-dotfiles
-# copy fresh configs back into the repo, then:
-git add -A && git commit -m "Sync from laptop" && git push
-```
-
-On the other laptop:
-
-```bash
-cd ~/Documents/GitHub/omarchy-dotfiles
-git pull
-./install.sh
-```
-
-After an Omarchy or Hyprland upgrade, rebuild hy3:
-
-```bash
-hyprpm update && hyprpm reload
-hyprctl plugin list
-```
-
----
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---------|-----|
-| Login hangs / black screen on NVIDIA | Keep hy3 **out** of cold-start `hyprland.lua`; use autostart reload (as shipped) |
-| hy3 binds do nothing | `hyprpm list` → enabled? `hyprctl plugin list` → loaded? Reload after enable |
-| Split windows have no gaps / borders gone | Omarchy's no-gaps toggle is on: `ls ~/.local/state/omarchy/toggles/hypr/` shows `window-no-gaps.lua`. Press `Super+Shift+Backspace` again or run `omarchy-hyprland-window-gaps-toggle` |
-| Bar shows only some workspaces, or numbers instead of names | `shell.json` must use `mahmoud.workspaces`, not `omarchy.workspaces`; then `omarchy restart shell` |
-| Bar missing widgets | `omarchy restart shell`; confirm `shell.json` ids match plugin manifests |
-| Screenshots fail | `grim`, `wl-clipboard`, and `jq` installed; focused script needs an active window |
-| Conky missing | Install [lean-conky-config](https://github.com/mysh264/lean-conky-config) or `./install.sh --with-conky` |
-| `configerrors` noise | Fix the printed Lua line; do not ignore it |
-| Arch: `omarchy` not found | Run `setup-arch-omarchy-stack.sh`, then re-login so `environment.d` sets `PATH` |
-| Arch: pacman wants Limine | Use the setup script’s `--assume-installed limine,…` flags — keep your bootloader |
+Keeping two laptops in sync and rebuilding hy3 after upgrades: [Updating](https://github.com/mysh264/omarchy-dotfiles/wiki/Updating). Something broke: [Troubleshooting](https://github.com/mysh264/omarchy-dotfiles/wiki/Troubleshooting).
 
 ---
 
 ## Credits & license
 
-- **Omarchy** — © David Heinemeier Hansson and contributors · [omacom/omarchy](https://github.com/omacom/omarchy) · [omarchy.org](https://omarchy.org) · MIT  
-- **hy3** — [outfoxxed/hy3](https://github.com/outfoxxed/hy3)  
+- **Omarchy** — © David Heinemeier Hansson and contributors · [omacom/omarchy](https://github.com/omacom/omarchy) · [omarchy.org](https://omarchy.org) · MIT
+- **hy3** — [outfoxxed/hy3](https://github.com/outfoxxed/hy3), the i3-style layout plugin that makes this possible
+- **TildaZ** — [ensky0/tildaz](https://github.com/ensky0/tildaz) · [tildaz.dev](https://tildaz.dev), the dropdown terminal
+- **Lean Conky Config** — [jxai/lean-conky-config](https://github.com/jxai/lean-conky-config) (fork: [mysh264/lean-conky-config](https://github.com/mysh264/lean-conky-config))
+- [Hyprland](https://hypr.land/) and the Quickshell ecosystem that powers Omarchy's shell
 - **This dotfiles repo** — MIT (see [LICENSE](LICENSE)). Configs are provided as-is for learning and reuse.
 
 If you publish a fork, please keep the Omarchy credit block above so newcomers find the real project first.

@@ -14,7 +14,11 @@ profile {
 }
 ```
 
-### Enable automatic night light
+### Quick toggle (no config needed)
+
+Omarchy's **Super+Ctrl+N** (or `omarchy toggle nightlight`) switches between 4000 K and normal. It starts `hyprsunset` itself if it is not running, so this works without any autostart line. Check the current state with `omarchy toggle nightlight --status` or `hyprctl hyprsunset temperature`.
+
+### Enable automatic night light (by time)
 
 1. Uncomment / add an evening profile in the conf:
 
@@ -40,6 +44,8 @@ omarchy restart hyprsunset
 
 Tune `time` and `temperature` to taste. Multiple `profile { }` blocks are allowed.
 
+Check: `pgrep -a hyprsunset` and `hyprctl hyprsunset temperature`.
+
 ---
 
 ## Desktop portal — `xdph.conf`
@@ -61,4 +67,10 @@ screencopy {
 | `allow_token_by_default` | Fewer repeated share prompts for screencast tokens |
 | `custom_picker_binary` | UI used when picking what to share |
 
-Applies after portal restart or next login. If screen sharing breaks after edits, revert and restart `xdg-desktop-portal-hyprland` / session.
+Applies after a portal restart or the next login:
+
+```bash
+systemctl --user restart xdg-desktop-portal-hyprland
+```
+
+If screen sharing breaks after an edit, revert the file and restart the portal again.

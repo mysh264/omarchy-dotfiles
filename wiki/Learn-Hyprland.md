@@ -29,9 +29,9 @@ Config lives under **`~/.config/hypr/`**. Never edit system packages for day-to-
 | Format | Typical file | Notes |
 |--------|--------------|-------|
 | Classic | `hyprland.conf` | `bind = …`, `monitor = …` |
-| Lua (Hyprland 0.50+) | `hyprland.lua` | `hl.config({…})`, `hl.dispatch(…)` |
+| Lua (newer Hyprland; this machine runs 0.56) | `hyprland.lua` | `hl.config({…})`, `hl.dispatch(…)` |
 
-**Omarchy and this rice use Lua.** Same ideas apply: a setting is a key → value, a bind is a key → action.
+**Omarchy and this rice use Lua.** Same ideas apply: a setting is a key → value, a bind is a key → action. Coming from i3's plain-text config? See [Coming from i3](Coming-from-i3).
 
 Minimal Lua idea:
 
@@ -75,8 +75,11 @@ hyprctl monitors all
 # Focused window (class/title for rules)
 hyprctl activewindow
 
-# All clients
+# All clients (normal windows)
 hyprctl clients
+
+# Layer surfaces: bar, wallpaper, dropdown terminal (not windows!)
+hyprctl layers
 
 # What keys are bound
 hyprctl binds | less
@@ -89,7 +92,8 @@ hyprctl getoption general:layout
 hyprctl plugin list
 
 # Live Lua (advanced)
-hyprctl repl 'return 1 + 1'
+hyprctl eval 'hl.config({ general = { gaps_in = 4 } })'   # run one Lua line (prints ok); a reload undoes it
+hyprctl repl                    # interactive, Ctrl+D to exit
 ```
 
 ### Find a physical key’s code (`wev`)
@@ -130,7 +134,7 @@ end)
 -- o.bind("SUPER + RETURN", "Terminal", { launch = "kitty" })
 ```
 
-**Important:** if something already bound that key, a second bind may **not** replace it. Unbind first (Omarchy rice always does this — see [Keybindings](Keybindings)).
+**Important:** a second bind on the same key does **not** replace the first. Hyprland runs both. Unbind first (`pcall(hl.unbind, "SUPER + X")`); this rice does that for every Omarchy key it reuses, see [Keybindings](Keybindings).
 
 Directions for window ops are usually `l` `d` `u` `r` (left/down/up/right).
 
@@ -144,7 +148,7 @@ Goal: “when class is X, put it on workspace Y / float / size …”
 2. `hyprctl activewindow` → read `class:`  
 3. Write a rule (Omarchy: `o.window("class-pattern", { … })`)  
 
-Class patterns often need `%.` to match a literal dot (`org.kde.dolphin`).
+Class patterns are regular expressions. A literal dot is `\.` in the regex, written `"\\."` inside a Lua string: `"(dolphin|org\\.kde\\.dolphin)"`.
 
 See [Hyprland Core](Hyprland-Core) for this rice’s `assign()` helper.
 
