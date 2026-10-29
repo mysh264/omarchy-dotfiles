@@ -71,7 +71,11 @@ Edit the `workspace_names` table (workspaces 1–12). Examples shipped:
 | 11 | System monitor |
 | 12 | Settings |
 
-Existing workspaces keep old names until renamed; empty ones pick up `default_name`.
+Existing workspaces keep old names until renamed; empty ones pick up `default_name`. The loop after the table renames existing workspaces on every reload, so a save applies everywhere.
+
+The bar widget `mahmoud.workspaces` reads this same table from the file, so changing an icon here changes it on the bar too, for empty and occupied workspaces alike. Keep the table's shape (one `"N: icon"` string per line, closing `}` at the start of a line). See [Plugins](Plugins).
+
+Icons are Nerd Font glyphs. Copy them from [nerdfonts.com/cheat-sheet](https://www.nerdfonts.com/cheat-sheet).
 
 ## App → workspace assignments
 

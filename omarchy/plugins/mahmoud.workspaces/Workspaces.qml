@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
@@ -17,32 +19,49 @@ BarWidget {
     return null
   }
 
-  // Same names as workspace_names in ~/.config/hypr/hyprland.lua. Used for
-  // workspaces Hyprland has not created yet (empty ones have no name to read).
-  readonly property var workspaceNames: [
-    "1:  ",
-    "2:  ",
-    "3:  ",
-    "4:  ",
-    "5:  ",
-    "6:  ",
-    "7:  ",
-    "8:  ",
-    "9:  ",
-    "10:  ",
-    "11:  ",
-    "12:  "
-  ]
+  // Workspaces 1..alwaysShown are always on the bar. Higher ones (up to
+  // maxWorkspaces) appear only while they exist, i.e. hold a window or are focused.
+  readonly property int alwaysShown: 7
+  readonly property int maxWorkspaces: Math.max(root.alwaysShown, root.workspaceNames.length || 12)
+
+  // Names come from workspace_names in ~/.config/hypr/hyprland.lua, so empty
+  // workspaces (which Hyprland has not created) show the same label as
+  // occupied ones. The file is watched; saving it updates the bar.
+  property var workspaceNames: []
+
+  function parseWorkspaceNames(text) {
+    var block = /workspace_names\s*=\s*\{([\s\S]*?)\n\}/.exec(text || "")
+    if (!block) return []
+
+    var names = []
+    var re = /"([^"]*)"/g
+    var match
+    while ((match = re.exec(block[1])) !== null) names.push(match[1])
+    return names
+  }
+
+  FileView {
+    path: Quickshell.env("HOME") + "/.config/hypr/hyprland.lua"
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+    onLoaded: root.workspaceNames = root.parseWorkspaceNames(text())
+    onLoadFailed: root.workspaceNames = []
+  }
 
   function workspaceIds() {
     var ids = []
-    for (var i = 1; i <= root.workspaceNames.length; i++) ids.push(i)
+    for (var id = 1; id <= root.maxWorkspaces; id++) {
+      if (id <= root.alwaysShown || root.workspaceById(id) !== null) ids.push(id)
+    }
     return ids
   }
 
   function workspaceLabel(id, workspace) {
-    if (workspace !== null && workspace.name && workspace.name !== String(id)) return workspace.name.trim()
-    return (root.workspaceNames[id - 1] || String(id)).trim()
+    var name = root.workspaceNames[id - 1]
+    if (name) return name.trim()
+    if (workspace !== null && workspace.name) return workspace.name.trim()
+    return String(id)
   }
 
   function focusWorkspace(id) {

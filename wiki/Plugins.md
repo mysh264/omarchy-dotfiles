@@ -64,7 +64,8 @@ omarchy restart shell
 
 The stock widget always shows 1–5, adds only workspaces that exist (up to 10), and shows bare numbers. The current one becomes a dot. This clone:
 
-- always shows workspaces **1–12**  
+- always shows workspaces **1–7**  
+- shows **8–12** only while they exist (they hold a window or you are on them)  
 - labels each one with its name from `workspace_names` in `hypr/hyprland.lua` (e.g. `1: >_`)  
 - highlights the current workspace and dims empty ones  
 
@@ -76,19 +77,24 @@ omarchy plugin clone omarchy.workspaces   # copies it and switches shell.json to
 omarchy restart shell                     # if the hot reload does not pick it up
 ```
 
-### Keep the names in sync
+### Names come from `hyprland.lua`
 
-Hyprland does not create empty workspaces, so their names cannot be read live. The widget keeps its own copy in `Workspaces.qml`:
+The widget reads `~/.config/hypr/hyprland.lua` and takes the strings in the `workspace_names = { … }` table. It watches the file, so saving it updates the bar. To rename a workspace or change its icon, edit **only** that table.
+
+Why: Hyprland does not create empty workspaces, so their names cannot be asked from Hyprland. An earlier version kept a second copy of the names in the QML. After icons for 2, 3 and 4 were changed in `hyprland.lua`, empty workspaces still showed the old icons from that copy, while occupied ones showed the new ones from Hyprland. Reading the file removes the second copy.
+
+Keep the table in this shape so the widget can find it: `local workspace_names = {`, one `"N: icon"` string per line, and the closing `}` alone at the start of a line. If the table cannot be read, the bar falls back to Hyprland's live name, then to the number.
+
+### Change how many are shown
+
+At the top of `Workspaces.qml`:
 
 ```qml
-readonly property var workspaceNames: [
-  "1: …",
-  …
-  "12: …"
-]
+readonly property int alwaysShown: 7
 ```
 
-When you rename a workspace in `hypr/hyprland.lua`, change the same entry here. Existing workspaces show their live Hyprland name. Add or remove entries to show more or fewer workspaces.
+- `alwaysShown` — workspaces `1..alwaysShown` are always on the bar. Use `12` to always show all of them, `5` for fewer.  
+- The highest workspace shown is the number of entries in `workspace_names` (12). Add entries there to go higher.
 
 To go back to the stock widget, set the id in `shell.json` to `omarchy.workspaces`.
 

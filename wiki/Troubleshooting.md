@@ -18,7 +18,9 @@ omarchy restart shell         # bar issues
 | hy3 binds do nothing | Plugin not loaded / wrong workspace layout | `hyprpm enable hy3`; wait for autostart reload; check layouts below |
 | Focus/move dead on some workspaces only | Saved Omarchy layout ≠ hy3 | Inspect `~/.local/state/omarchy/workspace-layouts/`; ensure `hyprland.lua` forces hy3 after toggles; keep Super+L unbound |
 | Split windows have no gaps / borders gone | Omarchy's global no-gaps toggle is on | `ls ~/.local/state/omarchy/toggles/hypr/` shows `window-no-gaps.lua` → press `Super+Shift+Backspace` again or run `omarchy-hyprland-window-gaps-toggle` |
-| Bar shows only some workspaces, or numbers instead of names | Stock workspaces widget in use | `shell.json` must use `mahmoud.workspaces`; then `omarchy restart shell` ([Plugins](Plugins)) |
+| Bar shows numbers instead of names | Stock workspaces widget in use | `shell.json` must use `mahmoud.workspaces`; then `omarchy restart shell` ([Plugins](Plugins)) |
+| Bar shows only 1–7 | By design | 8–12 appear while in use; change `alwaysShown` in `Workspaces.qml` |
+| Empty workspaces show old icons, occupied ones new | Old widget with its own name list | Update `mahmoud.workspaces` from this repo; it reads `workspace_names` from `hyprland.lua` |
 | Bar missing / wrong widgets | shell.json ids / shell not running | `omarchy restart shell`; confirm ids match manifests; `omarchy plugin list` |
 | Bar won’t stay hidden / peek broken | Flag or shell sync | Check `~/.local/state/omarchy/toggles/bar-off`; Super+M; `omarchy-shell` running |
 | Screenshots fail | Missing tools / no focused window | Install `grim` `wl-clipboard` `jq`; run focused script manually |
@@ -26,6 +28,7 @@ omarchy restart shell         # bar issues
 | `configerrors` noise | Lua syntax / bad API call | Fix the printed line; do not ignore |
 | Arch: `omarchy` not found | PATH / environment.d | Run setup script; re-login; `export PATH="/usr/share/omarchy/bin:$PATH"` |
 | Arch: pacman wants Limine | Dep resolution | Use setup script `--assume-installed limine,…` flags |
+| Dropdown keys do nothing | TildaZ not installed / not autostarted | Install TildaZ and run `tildaz --desktop add`, or switch the binds back to Kitty ([Dropdown Terminal](Dropdown-Terminal)) |
 | Dropdown Kitty wrong size / not special | Class mismatch | Must launch `--class dropdown.terminal`; rule in `hyprland.lua` |
 | Tabs never appear / always appear | Auto titlebar logic | See [Look and Feel](Look-and-Feel); `tab_first_window`; window count helpers |
 | Cursor warps when apps open on other WS | Titlebar sync hop | Shipped code disables warps during hop — don’t remove that restore block |
