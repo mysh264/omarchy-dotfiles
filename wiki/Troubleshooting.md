@@ -2,6 +2,8 @@
 
 ## Quick checks
 
+Fastest: `./scripts/doctor.sh` from the repo, run in a Hyprland terminal. It only reads, and prints `[ok]` / `[FAIL]` for the stack, packages, session, hy3, configs and apps. Paste its output when asking for help.
+
 ```bash
 hyprctl configerrors              # must be empty
 hyprctl plugin list               # hy3 loaded?
@@ -37,6 +39,7 @@ omarchy restart shell             # bar issues
 | Conky missing | Not installed | `./install.sh --with-conky` or clone lean-conky-config |
 | `configerrors` noise | Lua syntax / bad API call | Fix the printed line; do not ignore it |
 | Arch: `omarchy` not found | PATH / environment.d | Run the setup script; re-login; `export PATH="/usr/share/omarchy/bin:$PATH"` |
+| Arch/CachyOS: nothing works (no keys, no file manager, no bar) | Missing Omarchy packages or user setup | `./scripts/doctor.sh`, then see [Arch Linux](Arch-Linux#arch-specific-troubleshooting) |
 | Arch: pacman wants Limine | Dependency resolution | Use the setup script; it passes `--assume-installed limine` and friends |
 | Arch/CachyOS: `omarchy-keyring … is unknown trust` | Key not trusted before the keyring package | Use the current setup script (it trusts key `40DFB630…F0134EE680CAC571` first). Details: [Arch Linux](Arch-Linux#arch-specific-troubleshooting) |
 | CachyOS: `conflicting files … owned by cachyos-alacritty-config` | `omarchy-settings` ships the same `/etc/skel` file | Current setup script keeps CachyOS's file and shares it; do not remove the package (`cachyos-kde-settings` needs it). See [Safeguards](Arch-Linux#safeguards-for-arch-endeavouros-and-cachyos) |

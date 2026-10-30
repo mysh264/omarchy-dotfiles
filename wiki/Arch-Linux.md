@@ -40,8 +40,21 @@ The script:
 2. Trusts Omarchy's packaging key the same way Omarchy's own `omarchy-update-keyring` does, then installs `omarchy-keyring`
 3. On anything that is not Omarchy OS, adds the [safeguards](#safeguards-for-arch-endeavouros-and-cachyos) below
 4. Installs `omarchy` and the desktop deps without Limine / Snapper
-5. Writes `OMARCHY_PATH` + `PATH` into `~/.config/environment.d/`, `~/.bashrc`, and for fish `~/.config/fish/conf.d/omarchy-dotfiles.fish`
-6. Installs the Arch packages this rice expects (`hyprpm`, `grim`, `slurp`, `wl-clipboard`, `jq`, `kitty`, `konsole`, `dolphin`, …), and tries `brave-bin`, `firefox`, `viewnior`, `gwenview` as optional
+5. Installs **Omarchy's full base package list** (`/usr/share/omarchy/install/omarchy-base.packages`, ~145 packages: terminal, Nautilus, fonts, bluetooth, audio, portals, Chromium, …). The `omarchy` package alone is only the shell, scripts and defaults; Omarchy OS installs the rest from its ISO, and without it most keys and menu entries do nothing. Boot packages (`plymouth`, Limine, Snapper, `kernel-modules-hook`) are skipped. pacman runs **without** `--noconfirm` here, so you answer any conflict with your distro's packages yourself
+6. Installs the Arch packages this rice expects (`hyprpm` plus `base-devel cmake meson cpio pkgconf git` to build hy3, `grim`, `slurp`, `wl-clipboard`, `jq`, `kitty`, `konsole`, `dolphin`, …), and tries `brave-bin`, `firefox`, `viewnior`, `gwenview` as optional
+7. Writes `OMARCHY_PATH` + `PATH` into `~/.config/environment.d/`, `~/.bashrc`, and for fish `~/.config/fish/conf.d/omarchy-dotfiles.fish`
+8. Copies Omarchy's default user configs from `/etc/skel` into your home, **missing files only** (`cp -rn`). Omarchy OS does this when it creates the user; an existing user on another distro never got it
+
+Then:
+
+```bash
+./install.sh --target arch           # this rice
+# log out, pick "Hyprland (uwsm-managed)", then in a Hyprland terminal:
+omarchy-provision-first-run --force  # Omarchy's per-user setup: theme, user services, default apps
+./scripts/doctor.sh                  # health report if anything is still off
+```
+
+`omarchy-provision-first-run` also runs by itself at the first Hyprland login. Run it again with `--force` if that login happened before all packages were in.
 
 **Log out / reboot** so `environment.d` applies.
 
@@ -126,6 +139,7 @@ Some menu entries that assume Omarchy-only tooling may do less. The focus of thi
 |---------|-----|
 | `omarchy-keyring: signature from "Omarchy <pkgs@omarchy.org>" is unknown trust` | The key was not trusted before the keyring package. Run the current script, or by hand: `sudo pacman-key --recv-keys 40DFB630FF42BCFFB047046CF0134EE680CAC571 --keyserver keys.openpgp.org`, `sudo pacman-key --lsign-key 40DFB630FF42BCFFB047046CF0134EE680CAC571`, then `sudo pacman -Sy omarchy-keyring`. Do not use `SigLevel = TrustAll` |
 | `conflicting files: omarchy-settings: /etc/skel/.config/alacritty/alacritty.toml exists in filesystem (owned by cachyos-alacritty-config)` | Run the current script: it keeps CachyOS's file and shares it (see [safeguards](#safeguards-for-arch-endeavouros-and-cachyos)). Do not remove `cachyos-alacritty-config`: `cachyos-kde-settings` needs it |
+| Nothing works in Hyprland: no shortcuts, no file manager, no bar | Run `./scripts/doctor.sh` inside Hyprland and look at the `[FAIL]` lines. Usual causes: Omarchy base packages missing (re-run the current setup script), `install.sh` not run (no `~/.config/hypr/hyprland.lua`), hy3 not built (most i3 keys are skipped until it loads: `hyprpm list`), first-run setup ran before the packages were in (`omarchy-provision-first-run --force`) |
 | `omarchy: command not found` | `export PATH="/usr/share/omarchy/bin:$PATH"`; re-login so `environment.d` loads |
 | Empty / default Hyprland config | Make sure `~/.config/hypr/hyprland.lua` exists and your Hyprland is current (`sudo pacman -Syu`, then `hyprctl version`; this rice is tested on 0.56) |
 | pacman wants Limine | Always use the script; it passes the `--assume-installed` flags |

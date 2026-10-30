@@ -251,6 +251,29 @@ EOF
     "${STACK_PKGS[@]}"
 fi
 
+# The omarchy package is only the shell, scripts and defaults. On Omarchy OS
+# the ISO also installs ~150 packages the desktop relies on (terminal, file
+# manager, launcher helpers, fonts, bluetooth, audio tools, portals, …).
+# Without them most keys and menu entries do nothing. Install the same list
+# Omarchy's own omarchy-reinstall-pkgs uses (not that command itself: it
+# replaces /etc/pacman.conf, which would drop your distro's repos).
+echo "==> Omarchy base packages (what Omarchy OS installs from its ISO)"
+BASE_LIST=/usr/share/omarchy/install/omarchy-base.packages
+# Boot-related: left to your distro (see the safeguards above).
+BASE_SKIP=(plymouth kernel-modules-hook limine limine-mkinitcpio-hook limine-snapper-sync snapper)
+if [[ -f $BASE_LIST ]]; then
+  mapfile -t BASE_PKGS < <(grep -v -e '^#' -e '^$' "$BASE_LIST" | grep -vxF -f <(printf '%s\n' "${BASE_SKIP[@]}"))
+  echo "    ${#BASE_PKGS[@]} packages from $BASE_LIST (skipping: ${BASE_SKIP[*]})"
+  # Not --noconfirm: if one of them conflicts with a package of your distro
+  # (power-profiles-daemon vs tuned-ppd, …), pacman asks and you decide.
+  run sudo pacman -S --needed "${OVERWRITE_ARGS[@]}" "${BASE_PKGS[@]}"
+elif [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "[dry-run] sudo pacman -S --needed <packages listed in $BASE_LIST>"
+else
+  echo "    $BASE_LIST missing: the omarchy package did not install. Stopping." >&2
+  exit 1
+fi
+
 echo "==> Core Arch packages for this rice"
 ARCH_PKGS=(
   hyprpm hyprland hyprlock hypridle hyprsunset
@@ -259,6 +282,8 @@ ARCH_PKGS=(
   kitty konsole dolphin
   pipewire wireplumber
   uwsm
+  # hyprpm builds hy3 from source and needs these
+  base-devel cmake meson cpio pkgconf git
 )
 # Optional apps the keymap launches. brave-bin comes from the [omarchy] repo.
 # One missing package makes pacman skip the whole list, so failure only warns.
@@ -310,10 +335,25 @@ EOF
   fi
 fi
 
-echo "==> Session tip"
+# On Omarchy OS a new user's home is seeded from /etc/skel (omarchy-settings
+# puts Omarchy's default configs there). An existing user on another distro
+# never got that. Copy what is missing; never overwrite a file you have.
+echo "==> Omarchy default user configs from /etc/skel (missing files only)"
+if [[ -d /etc/skel/.config/omarchy ]]; then
+  run cp -rn /etc/skel/. "$HOME"/
+elif [[ "$DRY_RUN" -eq 1 ]]; then
+  echo "[dry-run] cp -rn /etc/skel/. ~/"
+fi
+
+echo "==> Next steps"
 cat <<'EOF'
-  Log out and pick “Hyprland (uwsm-managed)” (or Hyprland) in SDDM/GDM.
-  Then run:  ./install.sh --target arch
+  1. ./install.sh --target arch        (this rice: hypr, bar, TildaZ, …)
+  2. Log out, pick "Hyprland (uwsm-managed)" at the login screen.
+  3. In Hyprland, open a terminal (Super+Return) and run once:
+       omarchy-provision-first-run --force
+     It finishes Omarchy's per-user setup (theme, user services, default
+     apps). It already ran at your first login, but packages were missing then.
+  4. Something still broken?  ./scripts/doctor.sh  and read its report.
   Full walkthrough: docs/arch-linux.md
 EOF
 

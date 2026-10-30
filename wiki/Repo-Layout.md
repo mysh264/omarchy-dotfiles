@@ -44,6 +44,7 @@ omarchy-dotfiles/
 │   └── alacritty.toml
 ├── scripts/
 │   ├── setup-arch-omarchy-stack.sh   # baseline Arch: layer the Omarchy stack
+│   ├── doctor.sh             # read-only health report (Omarchy OS or Arch-family)
 │   ├── distro-guard/         # Arch/CachyOS safeguards: pacman hook + restore script (see Arch Linux page)
 │   └── publish-wiki.sh               # rsync wiki/ to the GitHub wiki repo
 ├── wiki/                     # these pages (published by scripts/publish-wiki.sh, not installed)
