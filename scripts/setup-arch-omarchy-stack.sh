@@ -137,6 +137,44 @@ distro_guard() {
 # pacman only conflict-checks files that are new in an upgrade, so later
 # omarchy-settings upgrades do not stop on it again.
 OVERWRITE_ARGS=()
+
+# Your distro may already ship its own version of a tool on Omarchy's list, and
+# other distro packages may depend on it (CachyOS: tealdeer provides `tldr` and
+# cachyos-fish-config requires it, so Omarchy's tldr cannot replace it). pacman
+# would offer to remove the distro's package and then fail the whole step.
+# Keep the distro's package and skip Omarchy's: both give the same command.
+skip_conflicting_base_pkgs() {
+  local -A installed_conflicts=()
+  local name conflicts c
+  # Conflicts declared by installed packages: "tealdeer conflicts with tldr".
+  while IFS=$'\t' read -r name conflicts; do
+    for c in $conflicts; do
+      installed_conflicts["${c%%[<>=]*}"]+=" $name"
+    done
+  done < <(expac -Q '%n\t%H' 2>/dev/null)
+
+  local kept=() pkg why
+  for pkg in "${BASE_PKGS[@]}"; do
+    why=""
+    if ! pacman -Q "$pkg" &>/dev/null; then
+      if [[ -n ${installed_conflicts[$pkg]:-} ]]; then
+        why="installed${installed_conflicts[$pkg]} conflicts with it"
+      else
+        # Conflicts declared by the Omarchy-list package itself.
+        for c in $(expac -S '%H' "$pkg" 2>/dev/null | head -1); do
+          c=${c%%[<>=]*}
+          if pacman -T "$c" &>/dev/null; then why="it conflicts with installed $c"; break; fi
+        done
+      fi
+    fi
+    if [[ -n $why ]]; then
+      echo "    skip $pkg: $why (keeping your distro's package)"
+    else
+      kept+=("$pkg")
+    fi
+  done
+  BASE_PKGS=("${kept[@]}")
+}
 resolve_file_conflicts() {
   echo "==> Check Omarchy packages for file conflicts with ${ID:-this distro}"
   if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -264,6 +302,8 @@ BASE_SKIP=(plymouth kernel-modules-hook limine limine-mkinitcpio-hook limine-sna
 if [[ -f $BASE_LIST ]]; then
   mapfile -t BASE_PKGS < <(grep -v -e '^#' -e '^$' "$BASE_LIST" | grep -vxF -f <(printf '%s\n' "${BASE_SKIP[@]}"))
   echo "    ${#BASE_PKGS[@]} packages from $BASE_LIST (skipping: ${BASE_SKIP[*]})"
+  run sudo pacman -S --needed --noconfirm expac   # reads conflict lists below
+  skip_conflicting_base_pkgs
   # Not --noconfirm: if one of them conflicts with a package of your distro
   # (power-profiles-daemon vs tuned-ppd, …), pacman asks and you decide.
   run sudo pacman -S --needed "${OVERWRITE_ARGS[@]}" "${BASE_PKGS[@]}"
