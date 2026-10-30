@@ -152,7 +152,7 @@ The `omarchy` package depends on `omarchy-settings`, which is written for **Omar
 |---|---|---|
 | Installs `/etc/mkinitcpio.conf.d/omarchy_hooks.conf`, which **replaces your initramfs `HOOKS`** with Omarchy's (`plymouth`, `encrypt`, `btrfs-overlayfs`, …) | `btrfs-overlayfs` comes from `limine-snapper-sync`, which is skipped; an ext4 or systemd-hook install needs different hooks. The next kernel update could build a broken initramfs and the machine may not boot | Adds a `NoExtract` line to `[options]` in `/etc/pacman.conf` for Omarchy's mkinitcpio and Limine drop-ins, so pacman never writes them. Backup: `/etc/pacman.conf.omarchy-dotfiles.bak` |
 | Its install script **overwrites** `/etc/os-release`, `/etc/nsswitch.conf`, `/etc/security/faillock.conf`, `/etc/plymouth/plymouthd.conf`, `/etc/skel/.bashrc` and the cups files on **every** install and upgrade | Your distro would call itself "Omarchy", and its own settings would be replaced | Saves your copies once to `/etc/omarchy-dotfiles/distro-files/`, and installs a pacman hook (`/etc/pacman.d/hooks/omarchy-dotfiles-distro-guard.hook` → `/usr/local/lib/omarchy-dotfiles/restore-distro-files`) that puts them back after every `omarchy-settings` install or upgrade |
-| Ships files your distro's own packages may own. On CachyOS: `/etc/skel/.config/alacritty/alacritty.toml`, owned by `cachyos-alacritty-config` | pacman stops the whole install with `conflicting files` | Downloads the Omarchy packages first, finds every clash, and **asks** before removing the other package — only if nothing depends on it. Otherwise it stops and tells you which file |
+| Ships files your distro's own packages may own. On CachyOS: `/etc/skel/.config/alacritty/alacritty.toml`, owned by `cachyos-alacritty-config` (which `cachyos-kde-settings` requires) | pacman stops the whole install with `conflicting files`; removing the CachyOS package would break its KDE settings | Downloads the Omarchy packages first and finds every clash. Each clashing file is **shared**, nothing is removed: a `NoExtract` line keeps your distro's copy exactly as it is, and `--overwrite` for that one path lets the first install record it. pacman only checks files that are new in an upgrade, so later Omarchy updates do not stop on it again. Files no package owns stop the script with a list |
 
 Still from `omarchy-settings` (left alone, usually harmless): a fontconfig default (`/etc/fonts/conf.d/50-omarchy.conf`), `/etc/profile.d/omarchy.sh`, an SDDM theme (only matters if you log in through SDDM), and defaults under `/etc/skel` for new users.
 
@@ -165,7 +165,9 @@ cat /etc/os-release | head -3         # still your distro
 ls /etc/pacman.d/hooks/omarchy-dotfiles-distro-guard.hook
 ```
 
-To undo the safeguards (only after removing the Omarchy packages): delete the two `omarchy-dotfiles` lines from `[options]` in `/etc/pacman.conf`, then `sudo rm -r /etc/omarchy-dotfiles /usr/local/lib/omarchy-dotfiles /etc/pacman.d/hooks/omarchy-dotfiles-distro-guard.hook`.
+If you ever remove `omarchy-settings`, pacman also deletes the shared files; reinstall the distro package that owned them (`sudo pacman -S cachyos-alacritty-config`).
+
+To undo the safeguards (only after removing the Omarchy packages): delete the `omarchy-dotfiles` comment and the `NoExtract` lines under it from `[options]` in `/etc/pacman.conf`, then `sudo rm -r /etc/omarchy-dotfiles /usr/local/lib/omarchy-dotfiles /etc/pacman.d/hooks/omarchy-dotfiles-distro-guard.hook`.
 
 ## How this differs from Omarchy OS
 
@@ -205,7 +207,7 @@ hyprctl configerrors
 | Symptom | Fix |
 |---------|-----|
 | `omarchy-keyring: signature from "Omarchy <pkgs@omarchy.org>" is unknown trust` | The key was not trusted before the keyring package. Run the current script, or by hand: `sudo pacman-key --recv-keys 40DFB630FF42BCFFB047046CF0134EE680CAC571 --keyserver keys.openpgp.org`, `sudo pacman-key --lsign-key 40DFB630FF42BCFFB047046CF0134EE680CAC571`, then `sudo pacman -Sy omarchy-keyring`. Do not use `SigLevel = TrustAll` |
-| `conflicting files: omarchy-settings: /etc/skel/.config/alacritty/alacritty.toml exists in filesystem (owned by cachyos-alacritty-config)` | Run the current script: it finds the clash and asks to remove `cachyos-alacritty-config` (it only provides a default Alacritty config for new users). Do **not** just remove it and re-run an older copy of the script — that one has no [safeguards](#safeguards-for-arch-endeavouros-and-cachyos) |
+| `conflicting files: omarchy-settings: /etc/skel/.config/alacritty/alacritty.toml exists in filesystem (owned by cachyos-alacritty-config)` | Run the current script: it keeps CachyOS's file and shares it (see [safeguards](#safeguards-for-arch-endeavouros-and-cachyos)). Do not remove `cachyos-alacritty-config`: `cachyos-kde-settings` needs it |
 | `omarchy: command not found` | `export PATH="/usr/share/omarchy/bin:$PATH"` for now, and log out and in so `environment.d` applies |
 | Hyprland starts with an empty / default config | Check `~/.config/hypr/hyprland.lua` exists (`install.sh` copies it) and that your Hyprland reads Lua configs (`hyprctl version`; Omarchy 4.x ships one that does) |
 | pacman wants to install Limine | Always pass the four `--assume-installed` flags shown above |

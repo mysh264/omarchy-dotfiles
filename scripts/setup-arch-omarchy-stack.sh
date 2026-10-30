@@ -21,8 +21,8 @@ On baseline Arch Linux this:
      - saves os-release, nsswitch.conf, faillock.conf, plymouthd.conf, skel/.bashrc
        and the cups files, plus a pacman hook that restores them after every
        omarchy-settings install/upgrade
-     - finds packages that own files Omarchy also ships (CachyOS:
-       cachyos-alacritty-config) and asks before removing them
+     - files Omarchy also ships that your distro's packages own (CachyOS:
+       /etc/skel/.config/alacritty/alacritty.toml) keep your copy and are shared
   4. Installs omarchy + desktop deps while NOT pulling Limine/Snapper
      (keeps systemd-boot / GRUB / whatever you already use)
   5. Writes OMARCHY_PATH + PATH into ~/.config/environment.d/ (and bash/fish)
@@ -128,8 +128,15 @@ distro_guard() {
 }
 
 # omarchy-settings ships files this distro's own config packages may own (on
-# CachyOS: cachyos-alacritty-config owns /etc/skel/.config/alacritty/alacritty.toml).
-# pacman stops the whole transaction on such a conflict. Find them up front.
+# CachyOS: cachyos-alacritty-config, required by cachyos-kde-settings, owns
+# /etc/skel/.config/alacritty/alacritty.toml). pacman stops the whole
+# transaction on such a conflict. Removing the distro's package could break its
+# desktop, so instead the file is shared:
+#   - NoExtract keeps the distro's copy on disk, untouched;
+#   - --overwrite for that one path lets the first install record it.
+# pacman only conflict-checks files that are new in an upgrade, so later
+# omarchy-settings upgrades do not stop on it again.
+OVERWRITE_ARGS=()
 resolve_file_conflicts() {
   echo "==> Check Omarchy packages for file conflicts with ${ID:-this distro}"
   if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -141,7 +148,7 @@ resolve_file_conflicts() {
   sudo pacman -Sw --noconfirm "${assume[@]}" omarchy omarchy-settings >/dev/null
 
   local url pkgfile pkgname file owner
-  local -A owners=() unowned=()
+  local -A shared=() unowned=()
   for url in $(pacman -Sp "${assume[@]}" omarchy omarchy-settings); do
     pkgfile="/var/cache/pacman/pkg/${url##*/}"
     [[ -f $pkgfile ]] || continue
@@ -149,12 +156,11 @@ resolve_file_conflicts() {
     while IFS= read -r file; do
       [[ $file == .* || $file == */ ]] && continue
       [[ -e /$file || -L /$file ]] || continue
-      # NoExtract files are still conflict-checked, so they count too.
       owner=$(pacman -Qoq "/$file" 2>/dev/null || true)
       case $owner in
         omarchy|omarchy-settings|"$pkgname") ;;
         "") unowned["/$file"]=1 ;;
-        *) owners["$owner"]+=" /$file" ;;
+        *) shared["$file"]=$owner ;;
       esac
     done < <(bsdtar -tf "$pkgfile")
   done
@@ -165,27 +171,15 @@ resolve_file_conflicts() {
     echo "    Move them aside (e.g. sudo mv FILE FILE.bak) and run this script again." >&2
     exit 1
   fi
-  (( ${#owners[@]} )) || { echo "    No conflicts"; return 0; }
+  (( ${#shared[@]} )) || { echo "    No conflicts"; return 0; }
 
-  local pkg required
-  for pkg in "${!owners[@]}"; do
-    echo "    $pkg owns files Omarchy also ships:${owners[$pkg]}"
-    required=$(pacman -Qi "$pkg" | sed -n 's/^Required By *: //p')
-    if [[ $required != "None" ]]; then
-      echo "    $pkg is required by: $required — cannot remove it safely. Stopping." >&2
-      echo "    Decide by hand, then run this script again." >&2
-      exit 1
+  for file in "${!shared[@]}"; do
+    echo "    /$file is owned by ${shared[$file]}: keeping that copy (NoExtract), sharing ownership"
+    if ! grep -qxF "NoExtract = $file" /etc/pacman.conf; then
+      sudo sed -i "/^# omarchy-dotfiles: NoExtract/a NoExtract = $file" /etc/pacman.conf
     fi
+    OVERWRITE_ARGS+=(--overwrite "/$file")
   done
-
-  echo "    Nothing depends on: ${!owners[*]}"
-  read -rp "    Remove them so Omarchy can install? [y/N] " reply
-  if [[ $reply == [yY]* ]]; then
-    sudo pacman -R --noconfirm "${!owners[@]}"
-  else
-    echo "    Stopping. Nothing was installed." >&2
-    exit 1
-  fi
 }
 
 if [[ -f /etc/os-release ]]; then
@@ -253,6 +247,7 @@ EOF
     --assume-installed limine-mkinitcpio-hook \
     --assume-installed limine-snapper-sync \
     --assume-installed snapper \
+    "${OVERWRITE_ARGS[@]}" \
     "${STACK_PKGS[@]}"
 fi
 
