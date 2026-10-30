@@ -38,6 +38,7 @@ omarchy restart shell             # bar issues
 | Screenshots fail | Missing tools / no focused window | Install `grim` `wl-clipboard` `jq`; run `~/.config/hypr/scripts/screenshot-focused` by hand |
 | Conky missing | Not installed | `./install.sh --with-conky` or clone lean-conky-config |
 | `cp: cannot stat '/usr/bin/conky'` / `conky-wayland: No such file` from `start-lcc.sh` | The config is cloned but the Conky program is not installed (old script) | `sudo pacman -S conky`, then `git -C ~/.config/conky pull` for the script that says this clearly. See [Conky](Conky) |
+| Wallpaper never changes, bar wallpaper buttons do nothing | `~/.Wallpapers` is empty (the slideshow ships no images), or the slideshow is paused | `find -L ~/.Wallpapers -type f \| wc -l`; add images or `./install.sh --with-wallpapers`. Paused? `systemctl --user start wallpaper-slideshow` or the bar's play button. See [Wallpaper Widget](Wallpaper-Widget) |
 | Conky aborts at start on Wayland | Its `set_font` assert; the fix did not apply to this build | Run `python3 ~/.config/conky/tools/patch-conky-wayland /usr/bin/conky /tmp/conky-test` and read why; see [Conky](Conky#tips) |
 | `configerrors` noise | Lua syntax / bad API call | Fix the printed line; do not ignore it |
 | Arch: `omarchy` not found | PATH / environment.d | Run the setup script; re-login; `export PATH="/usr/share/omarchy/bin:$PATH"` |

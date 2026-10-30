@@ -84,6 +84,32 @@ for c in konsole kitty dolphin nautilus foot brave firefox tildaz grim slurp wl-
 done
 if have hyprpm; then info "hyprpm list:"; hyprpm list 2>&1 | sed 's/^/         /' | head -10; fi
 
+section "Wallpaper slideshow"
+if [[ -x ~/.local/bin/wallpaper-slideshow ]]; then ok "~/.local/bin/wallpaper-slideshow"; else bad "wallpaper-slideshow not installed (./install.sh)"; fi
+wp_dir=~/.Wallpapers
+[[ -f ~/.config/wallpaper-slideshow.conf ]] && wp_dir=$(bash -c '. ~/.config/wallpaper-slideshow.conf 2>/dev/null; echo "${WALLPAPER_DIR:-$HOME/.Wallpapers}"')
+wp_count=$(find -L "$wp_dir" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) 2>/dev/null | wc -l)
+if (( wp_count > 0 )); then ok "$wp_count images in $wp_dir"; else bad "no images in $wp_dir: the slideshow and bar buttons have nothing to show (add images, or ./install.sh --with-wallpapers)"; fi
+wp_state=$(systemctl --user is-active wallpaper-slideshow.service 2>/dev/null)
+wp_enabled=$(systemctl --user is-enabled wallpaper-slideshow.service 2>/dev/null)
+if [[ $wp_state == active ]]; then ok "slideshow running ($wp_enabled)"; else info "slideshow $wp_state ($wp_enabled): paused? start with the bar's play button or: systemctl --user start wallpaper-slideshow"; fi
+
+section "Conky (optional)"
+if [[ -d ~/.config/conky ]]; then
+  if have conky; then ok "$(conky -v 2>/dev/null | grep -m1 -o 'conky [0-9.]*')"; else bad "~/.config/conky exists but Conky is not installed: sudo pacman -S conky"; fi
+  if [[ -x ~/.config/conky/tools/patch-conky-wayland ]]; then
+    ok "start-lcc.sh has the Wayland fix tool"
+  elif git -C ~/.config/conky remote get-url origin 2>/dev/null | grep -q 'mysh264/lean-conky-config'; then
+    bad "lean-conky-config is out of date (no Wayland fix tool): git -C ~/.config/conky pull"
+  else
+    info "~/.config/conky is not a clone of github.com/mysh264/lean-conky-config (origin: $(git -C ~/.config/conky remote get-url origin 2>/dev/null || echo none)); the CachyOS-safe Wayland fix lives there"
+  fi
+  if [[ -f ~/.config/conky/conky-wayland.source ]]; then ok "patched copy: $(cut -d' ' -f1 ~/.config/conky/conky-wayland.source)"; else info "no patched copy yet (made on the next start-lcc.sh)"; fi
+  if pgrep -f "conky.*-- 0ce31833f8f0bae3" >/dev/null; then ok "Conky panel running"; else bad "Conky panel not running: ~/.config/conky/start-lcc.sh -n"; fi
+else
+  info "~/.config/conky not present (optional: ./install.sh --with-conky)"
+fi
+
 section "Recent user-session errors"
 journalctl --user -b -p err --no-pager -n 15 2>/dev/null | sed 's/^/  /' || info "journalctl not available"
 

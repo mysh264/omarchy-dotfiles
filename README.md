@@ -75,7 +75,7 @@ cd ~/Documents/GitHub/omarchy-dotfiles
 ./install.sh              # configs + hy3 + wallpaper slideshow + TildaZ
 ```
 
-Options: `--skip-hy3`, `--skip-tildaz`, `--skip-wallpaper`, `--with-conky`, `--target auto|omarchy|arch`. `./install.sh --help` lists them.
+Options: `--skip-hy3`, `--skip-tildaz`, `--skip-wallpaper`, `--with-wallpapers` (the ~1.2 GB [wallpaper pack](https://github.com/mysh264/wallpapers); the slideshow ships no images), `--with-conky`, `--target auto|omarchy|arch`. `./install.sh --help` lists them.
 
 ### On Arch, EndeavourOS or CachyOS
 

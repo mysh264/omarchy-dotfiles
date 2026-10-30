@@ -41,6 +41,7 @@ sudo pacman -S --needed hyprpm konsole kitty dolphin brave-bin firefox \
 # ./install.sh --skip-hy3       # do not touch the hy3 plugin
 # ./install.sh --skip-tildaz    # do not install TildaZ (dropdown terminal)
 # ./install.sh --skip-wallpaper # do not install the wallpaper slideshow
+# ./install.sh --with-wallpapers # also install the wallpaper pack (~1.2 GB) into ~/.Wallpapers
 ```
 
 ### Adapt it to this laptop
@@ -122,6 +123,7 @@ What `config_0.toml` sets: hotkey `F1`, `/usr/bin/bash`, theme `Tilda`, DejaVu S
 --with-conky                 also clone lean-conky-config
 --skip-tildaz                do not install TildaZ
 --skip-wallpaper             do not install the wallpaper slideshow
+--with-wallpapers            also clone github.com/mysh264/wallpapers (~1.2 GB) and install it into ~/.Wallpapers
 -h, --help
 ```
 

@@ -44,13 +44,20 @@ wallpaper_index() {
   echo -1
 }
 
+NO_WALLPAPERS_HINT="Put images in $WALLPAPER_DIR, or install the pack: https://github.com/mysh264/wallpapers"
+
 set_by_offset() {
-  local offset="$1"
+  local offset="$1" quiet="${2:-}"
   mapfile -d '' -t WALLPAPERS < <(list_wallpapers)
   local total=${#WALLPAPERS[@]}
 
   if (( total == 0 )); then
-    echo "No wallpapers found in $WALLPAPER_DIR" >&2
+    echo "No wallpapers found in $WALLPAPER_DIR. $NO_WALLPAPERS_HINT" >&2
+    # Bar clicks run without a terminal: say why nothing changed.
+    # The background loop stays quiet instead of notifying every interval.
+    if [[ -z $quiet ]] && command -v notify-send >/dev/null 2>&1; then
+      notify-send -a "Wallpaper slideshow" "No wallpapers found in $WALLPAPER_DIR" "$NO_WALLPAPERS_HINT"
+    fi
     return 1
   fi
 
@@ -146,8 +153,12 @@ status_json() {
   fi
 
   local tip
-  tip=$(printf '%s\n%s\n%d / %d · every %s\nbar: prev · pause/resume · next · scroll for prev/next' \
-    "$state" "$name" "$display_index" "$total" "$interval_label")
+  if (( total == 0 )); then
+    tip=$(printf 'No wallpapers in %s\n%s' "$WALLPAPER_DIR" "$NO_WALLPAPERS_HINT")
+  else
+    tip=$(printf '%s\n%s\n%d / %d · every %s\nbar: prev · pause/resume · next · scroll for prev/next' \
+      "$state" "$name" "$display_index" "$total" "$interval_label")
+  fi
 
   printf '{"text":"%s","tooltip":"%s","class":"%s","running":%s,"name":"%s","path":"%s","index":%d,"total":%d,"interval":%d}\n' \
     "$icon" \
@@ -201,10 +212,10 @@ case "$cmd" in
     status_json
     ;;
   --loop|loop)
-    next_wallpaper || true
+    set_by_offset 1 quiet || true
     while true; do
       sleep "$INTERVAL_SEC"
-      next_wallpaper || true
+      set_by_offset 1 quiet || true
     done
     ;;
   --help|-h|help)

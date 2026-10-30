@@ -12,6 +12,8 @@ WITH_HY3=1
 WITH_CONKY=0
 WITH_TILDAZ=1
 WITH_WALLPAPER=1
+WITH_WALLPAPER_PACK=0
+WALLPAPERS_REPO_DIR="${WALLPAPERS_REPO_DIR:-$HOME/Documents/GitHub/wallpapers}"
 TARGET="auto" # auto | omarchy | arch
 
 usage() {
@@ -33,6 +35,8 @@ Options:
   --skip-hy3         Do not add/enable/build the hy3 plugin with hyprpm
   --skip-tildaz      Do not install TildaZ (dropdown terminal) or copy its config
   --skip-wallpaper   Do not install the wallpaper slideshow the bar widget controls
+  --with-wallpapers  Also clone the wallpaper pack (github.com/mysh264/wallpapers,
+                     ~1.2 GB) and install it into ~/.Wallpapers
   --with-conky       Also clone lean-conky-config into ~/.config/conky
   -h, --help         Show this help
 
@@ -50,6 +54,7 @@ while [[ $# -gt 0 ]]; do
     --with-conky) WITH_CONKY=1; shift ;;
     --skip-tildaz) WITH_TILDAZ=0; shift ;;
     --skip-wallpaper) WITH_WALLPAPER=0; shift ;;
+    --with-wallpapers) WITH_WALLPAPER_PACK=1; shift ;;
     --target)
       TARGET="${2:-}"
       shift 2
@@ -213,7 +218,31 @@ if [[ "$WITH_WALLPAPER" -eq 1 ]]; then
     run cp "$ROOT/wallpaper/wallpaper-slideshow.conf" "$HOME/.config/wallpaper-slideshow.conf"
   fi
   backup_then_copy "$ROOT/wallpaper/wallpaper-slideshow.service" "$HOME/.config/systemd/user/wallpaper-slideshow.service"
+
+  # The slideshow only cycles images; it ships none. With an empty folder the
+  # timer and the bar buttons have nothing to change to.
+  count_wallpapers() {
+    find -L "$HOME/.Wallpapers" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \
+      -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) 2>/dev/null | wc -l
+  }
+  if [[ "$WITH_WALLPAPER_PACK" -eq 1 ]]; then
+    echo "    Wallpaper pack (~1.2 GB) → $WALLPAPERS_REPO_DIR"
+    if [[ -d "$WALLPAPERS_REPO_DIR/.git" ]]; then
+      run git -C "$WALLPAPERS_REPO_DIR" pull --ff-only || true
+    else
+      run git clone --depth 1 https://github.com/mysh264/wallpapers.git "$WALLPAPERS_REPO_DIR"
+    fi
+    # The pack's installer renames an existing ~/.Wallpapers to a .bak folder;
+    # an empty one is just removed instead.
+    [[ -d "$HOME/.Wallpapers" ]] && run rmdir "$HOME/.Wallpapers" 2>/dev/null || true
+    run "$WALLPAPERS_REPO_DIR/install.sh"
+  fi
   run mkdir -p "$HOME/.Wallpapers"
+  if [[ "$DRY_RUN" -eq 0 && "$(count_wallpapers)" -eq 0 ]]; then
+    echo "    NOTE: ~/.Wallpapers has no images, so the slideshow and the bar's"
+    echo "          wallpaper buttons have nothing to show. Add your own images there,"
+    echo "          or run again with --with-wallpapers to install github.com/mysh264/wallpapers."
+  fi
   run systemctl --user daemon-reload
   run systemctl --user enable --now wallpaper-slideshow.service || true
 fi

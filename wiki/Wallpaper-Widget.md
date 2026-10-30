@@ -8,7 +8,7 @@ Three small buttons on the bar (previous · pause/play · next) that drive a wal
 
 ## The slideshow behind it
 
-The widget only calls a command named `wallpaper-slideshow`. It is a small personal script (not part of Omarchy) that ships in this repo and is installed by `install.sh` (skip with `--skip-wallpaper`):
+The widget calls `~/.local/bin/wallpaper-slideshow` by its full path, so it works in both the "Hyprland" and "Hyprland (uwsm-managed)" sessions (only the uwsm one puts `~/.local/bin` on the session PATH). It is a small personal script (not part of Omarchy) that ships in this repo and is installed by `install.sh` (skip with `--skip-wallpaper`):
 
 | Repo | Live | What it is |
 |------|------|------------|
@@ -23,7 +23,21 @@ WALLPAPER_DIR="${HOME}/.Wallpapers"   # scanned recursively: jpg, jpeg, png, gif
 INTERVAL_SEC=300                      # 5 minutes
 ```
 
-Put images in `~/.Wallpapers` (the installer creates it). After changing the interval:
+**The slideshow ships no images.** `install.sh` creates an empty `~/.Wallpapers` and says so when it is empty. Fill it one of two ways:
+
+```bash
+# your own pictures
+cp ~/Pictures/*.jpg ~/.Wallpapers/
+
+# or the owner's pack (~1.2 GB, github.com/mysh264/wallpapers)
+./install.sh --with-wallpapers
+# by hand: git clone --depth 1 https://github.com/mysh264/wallpapers.git ~/Documents/GitHub/wallpapers
+#          ~/Documents/GitHub/wallpapers/install.sh
+```
+
+With an empty folder, clicking a bar button shows a notification ("No wallpapers found in ~/.Wallpapers") and the tooltip says the same; the timer stays quiet and just logs it.
+
+After changing the interval:
 
 ```bash
 systemctl --user restart wallpaper-slideshow.service

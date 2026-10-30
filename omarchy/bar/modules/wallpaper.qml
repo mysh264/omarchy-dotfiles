@@ -10,6 +10,10 @@ Item {
   property var bar
   property var settings
 
+  // Full path: works even when ~/.local/bin is not on the session PATH
+  // (plain "Hyprland" session instead of "Hyprland (uwsm-managed)").
+  readonly property string slideshowBin: Quickshell.env("HOME") + "/.local/bin/wallpaper-slideshow"
+
   property bool running: true
   property string wallpaperName: ""
   property string tooltip: "Wallpaper slideshow"
@@ -28,7 +32,7 @@ Item {
 
   function runCmd(action) {
     if (bar)
-      bar.run("wallpaper-slideshow --" + action)
+      bar.run("'" + slideshowBin + "' --" + action)
     statusTimer.restart()
   }
 
@@ -45,7 +49,7 @@ Item {
 
   Process {
     id: statusProc
-    command: ["wallpaper-slideshow", "--status"]
+    command: [root.slideshowBin, "--status"]
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: root.applyStatus(text)
