@@ -1,0 +1,13 @@
+# Installed by omarchy-dotfiles' setup-arch-omarchy-stack.sh on Arch-family
+# distros that are not Omarchy OS. Puts this distro's os-release, nsswitch.conf
+# and friends back after omarchy-settings overwrites them.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = omarchy-settings
+
+[Action]
+Description = Restoring this distro's system files after omarchy-settings...
+When = PostTransaction
+Exec = /usr/local/lib/omarchy-dotfiles/restore-distro-files

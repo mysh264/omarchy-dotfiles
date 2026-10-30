@@ -37,10 +37,11 @@ cd ~/Documents/GitHub/omarchy-dotfiles
 The script:
 
 1. Appends `[omarchy]` to `/etc/pacman.conf` (does not overwrite the file)
-2. Installs `omarchy-keyring`
-3. Installs `omarchy` and the desktop deps without Limine / Snapper
-4. Writes `OMARCHY_PATH` + `PATH` into `~/.config/environment.d/`
-5. Installs the Arch packages this rice expects (`hyprpm`, `grim`, `slurp`, `wl-clipboard`, `jq`, `kitty`, `konsole`, `dolphin`, …), and tries `brave-bin`, `firefox`, `viewnior`, `gwenview` as optional
+2. Trusts Omarchy's packaging key the same way Omarchy's own `omarchy-update-keyring` does, then installs `omarchy-keyring`
+3. On anything that is not Omarchy OS, adds the [safeguards](#safeguards-for-arch-endeavouros-and-cachyos) below
+4. Installs `omarchy` and the desktop deps without Limine / Snapper
+5. Writes `OMARCHY_PATH` + `PATH` into `~/.config/environment.d/`, `~/.bashrc`, and for fish `~/.config/fish/conf.d/omarchy-dotfiles.fish`
+6. Installs the Arch packages this rice expects (`hyprpm`, `grim`, `slurp`, `wl-clipboard`, `jq`, `kitty`, `konsole`, `dolphin`, …), and tries `brave-bin`, `firefox`, `viewnior`, `gwenview` as optional
 
 **Log out / reboot** so `environment.d` applies.
 
@@ -79,6 +80,29 @@ ls ~/.config/hypr/tildaz.lua       # TildaZ autostart present
 
 Press **F1** for the dropdown. The layout is `dwindle` for a moment at cold start; autostart loads hy3 and reloads. That is intentional (the NVIDIA rule in [Golden Rules](Golden-Rules)).
 
+## Safeguards for Arch, EndeavourOS and CachyOS
+
+The `omarchy` package depends on `omarchy-settings`, which is written for **Omarchy OS**. On another distro, two parts of it would hurt:
+
+| What `omarchy-settings` does | Why it is a problem elsewhere | What the script does |
+|---|---|---|
+| Installs `/etc/mkinitcpio.conf.d/omarchy_hooks.conf`, which **replaces your initramfs `HOOKS`** with Omarchy's (`plymouth`, `encrypt`, `btrfs-overlayfs`, …) | `btrfs-overlayfs` comes from `limine-snapper-sync`, which is skipped; an ext4 or systemd-hook install needs different hooks. The next kernel update could build a broken initramfs and the machine may not boot | Adds a `NoExtract` line to `[options]` in `/etc/pacman.conf` for Omarchy's mkinitcpio and Limine drop-ins, so pacman never writes them. Backup: `/etc/pacman.conf.omarchy-dotfiles.bak` |
+| Its install script **overwrites** `/etc/os-release`, `/etc/nsswitch.conf`, `/etc/security/faillock.conf`, `/etc/plymouth/plymouthd.conf`, `/etc/skel/.bashrc` and the cups files on **every** install and upgrade | Your distro would call itself "Omarchy", and its own settings would be replaced | Saves your copies once to `/etc/omarchy-dotfiles/distro-files/`, and installs a pacman hook (`/etc/pacman.d/hooks/omarchy-dotfiles-distro-guard.hook` → `/usr/local/lib/omarchy-dotfiles/restore-distro-files`) that puts them back after every `omarchy-settings` install or upgrade |
+| Ships files your distro's own packages may own. On CachyOS: `/etc/skel/.config/alacritty/alacritty.toml`, owned by `cachyos-alacritty-config` | pacman stops the whole install with `conflicting files` | Downloads the Omarchy packages first, finds every clash, and **asks** before removing the other package — only if nothing depends on it. Otherwise it stops and tells you which file |
+
+Still from `omarchy-settings` (left alone, usually harmless): a fontconfig default (`/etc/fonts/conf.d/50-omarchy.conf`), `/etc/profile.d/omarchy.sh`, an SDDM theme (only matters if you log in through SDDM), and defaults under `/etc/skel` for new users.
+
+Check it after the install:
+
+```bash
+grep -A1 'omarchy-dotfiles: NoExtract' /etc/pacman.conf
+ls /etc/mkinitcpio.conf.d/            # no omarchy_hooks.conf
+cat /etc/os-release | head -3         # still your distro
+ls /etc/pacman.d/hooks/omarchy-dotfiles-distro-guard.hook
+```
+
+To undo the safeguards (only after removing the Omarchy packages): delete the two `omarchy-dotfiles` lines from `[options]` in `/etc/pacman.conf`, then `sudo rm -r /etc/omarchy-dotfiles /usr/local/lib/omarchy-dotfiles /etc/pacman.d/hooks/omarchy-dotfiles-distro-guard.hook`.
+
 ## Editing features on Arch
 
 Same files as Omarchy OS; see [Home](Home). After Lua edits: `hyprctl reload && hyprctl configerrors`.
@@ -98,6 +122,8 @@ Some menu entries that assume Omarchy-only tooling may do less. The focus of thi
 
 | Symptom | Fix |
 |---------|-----|
+| `omarchy-keyring: signature from "Omarchy <pkgs@omarchy.org>" is unknown trust` | The key was not trusted before the keyring package. Run the current script, or by hand: `sudo pacman-key --recv-keys 40DFB630FF42BCFFB047046CF0134EE680CAC571 --keyserver keys.openpgp.org`, `sudo pacman-key --lsign-key 40DFB630FF42BCFFB047046CF0134EE680CAC571`, then `sudo pacman -Sy omarchy-keyring`. Do not use `SigLevel = TrustAll` |
+| `conflicting files: omarchy-settings: /etc/skel/.config/alacritty/alacritty.toml exists in filesystem (owned by cachyos-alacritty-config)` | Run the current script: it finds the clash and asks to remove `cachyos-alacritty-config` (it only provides a default Alacritty config for new users). Do **not** just remove it and re-run an older copy of the script — that one has no [safeguards](#safeguards-for-arch-endeavouros-and-cachyos) |
 | `omarchy: command not found` | `export PATH="/usr/share/omarchy/bin:$PATH"`; re-login so `environment.d` loads |
 | Empty / default Hyprland config | Make sure `~/.config/hypr/hyprland.lua` exists and your Hyprland is current (`sudo pacman -Syu`, then `hyprctl version`; this rice is tested on 0.56) |
 | pacman wants Limine | Always use the script; it passes the `--assume-installed` flags |

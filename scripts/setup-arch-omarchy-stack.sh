@@ -15,11 +15,18 @@ Usage: ./scripts/setup-arch-omarchy-stack.sh [options]
 
 On baseline Arch Linux this:
   1. Appends the [omarchy] pacman repo (if missing)
-  2. Installs omarchy-keyring
-  3. Installs omarchy + desktop deps while NOT pulling Limine/Snapper
+  2. Trusts Omarchy's packaging key (like omarchy-update-keyring), installs omarchy-keyring
+  3. Not on Omarchy OS: adds safeguards so Omarchy's packages leave your distro alone
+     - pacman NoExtract for Omarchy's initramfs (mkinitcpio) and Limine drop-ins
+     - saves os-release, nsswitch.conf, faillock.conf, plymouthd.conf, skel/.bashrc
+       and the cups files, plus a pacman hook that restores them after every
+       omarchy-settings install/upgrade
+     - finds packages that own files Omarchy also ships (CachyOS:
+       cachyos-alacritty-config) and asks before removing them
+  4. Installs omarchy + desktop deps while NOT pulling Limine/Snapper
      (keeps systemd-boot / GRUB / whatever you already use)
-  4. Writes OMARCHY_PATH + PATH into ~/.config/environment.d/ (and ~/.bashrc)
-  5. Installs Arch packages this rice expects (hyprpm, grim, konsole, …)
+  5. Writes OMARCHY_PATH + PATH into ~/.config/environment.d/ (and bash/fish)
+  6. Installs Arch packages this rice expects (hyprpm, grim, konsole, …)
      plus optional apps (brave-bin, firefox, viewnior, gwenview)
 
 Options:
@@ -46,6 +53,138 @@ run() {
     printf '[dry-run]'; printf ' %q' "$@"; printf '\n'
   else
     "$@"
+  fi
+}
+
+
+# --- Safeguards for distros that are not Omarchy OS -------------------------
+#
+# omarchy-settings (pulled in by the omarchy package) is written for Omarchy
+# OS. On Arch / EndeavourOS / CachyOS two parts of it are harmful:
+#   1. /etc/mkinitcpio.conf.d/omarchy_hooks.conf replaces the initramfs HOOKS
+#      with Omarchy's (plymouth, encrypt, btrfs-overlayfs from limine-snapper-
+#      sync, which is skipped above). The next kernel update could build a
+#      broken initramfs. NoExtract keeps these boot files off the disk.
+#   2. Its install script overwrites os-release, nsswitch.conf, faillock.conf,
+#      plymouthd.conf, skel/.bashrc and the cups files on every install and
+#      upgrade. They are saved here once and a pacman hook puts them back.
+GUARD_SAVE=/etc/omarchy-dotfiles/distro-files
+GUARD_PATHS=(
+  /etc/os-release
+  /etc/nsswitch.conf
+  /etc/security/faillock.conf
+  /etc/plymouth/plymouthd.conf
+  /etc/skel/.bashrc
+  /etc/cups/cups-browsed.conf
+  /etc/cups/cups-files.conf
+)
+GUARD_NOEXTRACT="etc/mkinitcpio.conf.d/omarchy_hooks.conf etc/mkinitcpio.conf.d/omarchy_vconsole.conf etc/mkinitcpio.conf.d/thunderbolt_module.conf etc/limine-entry-tool.d/omarchy-*.conf"
+
+distro_guard() {
+  echo "==> Safeguards for ${ID:-this distro} (keep its boot setup and system files)"
+
+  # 1. NoExtract: one line in [options], marked so a re-run finds it.
+  if ! grep -q '^# omarchy-dotfiles: NoExtract' /etc/pacman.conf; then
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+      echo "[dry-run] add to [options] in /etc/pacman.conf: NoExtract = $GUARD_NOEXTRACT"
+    else
+      sudo cp -a /etc/pacman.conf "/etc/pacman.conf.omarchy-dotfiles.bak"
+      sudo sed -i "/^\[options\]/a # omarchy-dotfiles: NoExtract keeps Omarchy's boot (initramfs) settings off this distro\nNoExtract = $GUARD_NOEXTRACT" /etc/pacman.conf
+    fi
+    echo "    NoExtract set (backup: /etc/pacman.conf.omarchy-dotfiles.bak)"
+  else
+    echo "    NoExtract already set"
+  fi
+
+  # 2. Save this distro's files once, before omarchy-settings ever runs.
+  if pacman -Q omarchy-settings &>/dev/null; then
+    echo "    omarchy-settings is already installed; not saving files (they may be Omarchy's now)"
+  elif [[ ! -f $GUARD_SAVE/paths ]]; then
+    local path
+    run sudo mkdir -p "$GUARD_SAVE"
+    for path in "${GUARD_PATHS[@]}"; do
+      run sudo mkdir -p "$GUARD_SAVE$(dirname "$path")"
+      if [[ -e $path || -L $path ]]; then
+        run sudo cp -a "$path" "$GUARD_SAVE$path"
+      else
+        run sudo touch "$GUARD_SAVE$path.absent"
+      fi
+    done
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+      echo "[dry-run] write $GUARD_SAVE/paths"
+    else
+      printf '%s\n' "${GUARD_PATHS[@]}" | sudo tee "$GUARD_SAVE/paths" >/dev/null
+    fi
+    echo "    Saved ${#GUARD_PATHS[@]} system files to $GUARD_SAVE"
+  else
+    echo "    System files already saved in $GUARD_SAVE"
+  fi
+
+  # 3. Hook that restores them after every omarchy-settings install/upgrade.
+  run sudo install -Dm755 "$ROOT/scripts/distro-guard/restore-distro-files" \
+    /usr/local/lib/omarchy-dotfiles/restore-distro-files
+  run sudo install -Dm644 "$ROOT/scripts/distro-guard/omarchy-dotfiles-distro-guard.hook" \
+    /etc/pacman.d/hooks/omarchy-dotfiles-distro-guard.hook
+}
+
+# omarchy-settings ships files this distro's own config packages may own (on
+# CachyOS: cachyos-alacritty-config owns /etc/skel/.config/alacritty/alacritty.toml).
+# pacman stops the whole transaction on such a conflict. Find them up front.
+resolve_file_conflicts() {
+  echo "==> Check Omarchy packages for file conflicts with ${ID:-this distro}"
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[dry-run] download omarchy + omarchy-settings and compare their files with installed packages"
+    return 0
+  fi
+  local assume=(--assume-installed limine --assume-installed limine-mkinitcpio-hook
+    --assume-installed limine-snapper-sync --assume-installed snapper)
+  sudo pacman -Sw --noconfirm "${assume[@]}" omarchy omarchy-settings >/dev/null
+
+  local url pkgfile pkgname file owner
+  local -A owners=() unowned=()
+  for url in $(pacman -Sp "${assume[@]}" omarchy omarchy-settings); do
+    pkgfile="/var/cache/pacman/pkg/${url##*/}"
+    [[ -f $pkgfile ]] || continue
+    pkgname=$(bsdtar -xOf "$pkgfile" .PKGINFO | sed -n 's/^pkgname = //p')
+    while IFS= read -r file; do
+      [[ $file == .* || $file == */ ]] && continue
+      [[ -e /$file || -L /$file ]] || continue
+      # NoExtract files are still conflict-checked, so they count too.
+      owner=$(pacman -Qoq "/$file" 2>/dev/null || true)
+      case $owner in
+        omarchy|omarchy-settings|"$pkgname") ;;
+        "") unowned["/$file"]=1 ;;
+        *) owners["$owner"]+=" /$file" ;;
+      esac
+    done < <(bsdtar -tf "$pkgfile")
+  done
+
+  if (( ${#unowned[@]} )); then
+    echo "    These files exist but no package owns them; Omarchy would conflict:" >&2
+    printf '      %s\n' "${!unowned[@]}" >&2
+    echo "    Move them aside (e.g. sudo mv FILE FILE.bak) and run this script again." >&2
+    exit 1
+  fi
+  (( ${#owners[@]} )) || { echo "    No conflicts"; return 0; }
+
+  local pkg required
+  for pkg in "${!owners[@]}"; do
+    echo "    $pkg owns files Omarchy also ships:${owners[$pkg]}"
+    required=$(pacman -Qi "$pkg" | sed -n 's/^Required By *: //p')
+    if [[ $required != "None" ]]; then
+      echo "    $pkg is required by: $required — cannot remove it safely. Stopping." >&2
+      echo "    Decide by hand, then run this script again." >&2
+      exit 1
+    fi
+  done
+
+  echo "    Nothing depends on: ${!owners[*]}"
+  read -rp "    Remove them so Omarchy can install? [y/N] " reply
+  if [[ $reply == [yY]* ]]; then
+    sudo pacman -R --noconfirm "${!owners[@]}"
+  else
+    echo "    Stopping. Nothing was installed." >&2
+    exit 1
   fi
 }
 
@@ -83,10 +222,21 @@ EOF
     echo "    [omarchy] already in /etc/pacman.conf"
   fi
 
-  echo "==> Sync + install omarchy-keyring"
+  # Same steps as Omarchy's own omarchy-update-keyring: trust the packaging key
+  # first. Installing omarchy-keyring before that fails with
+  # 'signature from "Omarchy <pkgs@omarchy.org>" is unknown trust'.
+  OMARCHY_KEY=40DFB630FF42BCFFB047046CF0134EE680CAC571
+  echo "==> Trust the Omarchy packaging key + install omarchy-keyring"
+  if [[ "$SKIP_KEYRING" -eq 0 ]]; then
+    if ! sudo pacman-key --list-keys "$OMARCHY_KEY" &>/dev/null; then
+      run sudo pacman-key --recv-keys "$OMARCHY_KEY" --keyserver keys.openpgp.org
+    fi
+    run sudo pacman-key --lsign-key "$OMARCHY_KEY"
+  fi
   run sudo pacman -Sy --needed --noconfirm omarchy-keyring
-  if [[ "$SKIP_KEYRING" -eq 0 && "$DRY_RUN" -eq 0 ]]; then
-    sudo pacman-key --populate omarchy || true
+
+  if [[ "${ID:-}" != "omarchy" ]]; then
+    distro_guard
   fi
 
   echo "==> Install Omarchy desktop stack (skip Limine/Snapper bootloader deps)"
@@ -95,14 +245,15 @@ EOF
   # The JetBrains Mono Nerd font comes in as omarchy's dependency
   # ttf-jetbrains-mono-nerd-basic. Do not also request ttf-jetbrains-mono-nerd:
   # the two conflict and the transaction fails.
-  run sudo pacman -Sy --needed --noconfirm \
+  STACK_PKGS=(omarchy hyprland quickshell uwsm sddm
+    xdg-desktop-portal-hyprland wireplumber pipewire gnome-keyring gum jq)
+  resolve_file_conflicts
+  run sudo pacman -S --needed --noconfirm \
     --assume-installed limine \
     --assume-installed limine-mkinitcpio-hook \
     --assume-installed limine-snapper-sync \
     --assume-installed snapper \
-    omarchy hyprland quickshell uwsm sddm \
-    xdg-desktop-portal-hyprland wireplumber pipewire \
-    gnome-keyring gum jq
+    "${STACK_PKGS[@]}"
 fi
 
 echo "==> Core Arch packages for this rice"
@@ -144,6 +295,23 @@ if [[ -f "$HOME/.bashrc" ]] && ! grep -q 'OMARCHY_PATH=/usr/share/omarchy' "$HOM
     echo "[dry-run] append OMARCHY_PATH to ~/.bashrc"
   else
     printf '\n# omarchy-dotfiles\n%s\n' "$BASHRC_SNIPPET" >>"$HOME/.bashrc"
+  fi
+fi
+
+# fish (CachyOS's default shell) does not read ~/.bashrc or /etc/profile.d.
+if command -v fish >/dev/null 2>&1; then
+  FISH_FILE="$HOME/.config/fish/conf.d/omarchy-dotfiles.fish"
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[dry-run] write $FISH_FILE"
+  else
+    mkdir -p "$(dirname "$FISH_FILE")"
+    cat >"$FISH_FILE" <<'EOF'
+# omarchy-dotfiles: Omarchy commands on PATH
+if test -d /usr/share/omarchy/bin
+    set -gx OMARCHY_PATH /usr/share/omarchy
+    fish_add_path -g /usr/share/omarchy/bin
+end
+EOF
   fi
 fi
 

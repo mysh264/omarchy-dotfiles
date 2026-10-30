@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Run by pacman (omarchy-dotfiles-distro-guard.hook) after omarchy-settings is
+# installed or upgraded on a distro that is not Omarchy OS.
+#
+# omarchy-settings' install script overwrites a few system files on every
+# install and upgrade (os-release, nsswitch.conf, faillock.conf, plymouthd.conf,
+# skel/.bashrc, the cups files). That is right on Omarchy OS and wrong on
+# Arch / EndeavourOS / CachyOS: the system would even call itself "Omarchy".
+# setup-arch-omarchy-stack.sh saved this distro's copies before the first
+# install; this puts them back.
+set -euo pipefail
+
+SAVE=/etc/omarchy-dotfiles/distro-files
+[[ -d $SAVE ]] || exit 0
+
+while IFS= read -r path; do
+  [[ -n $path ]] || continue
+  if [[ -e "$SAVE$path" || -L "$SAVE$path" ]]; then
+    # cp -a keeps a symlink a symlink (os-release -> ../usr/lib/os-release).
+    rm -f "$path"
+    cp -a "$SAVE$path" "$path"
+  elif [[ -e "$SAVE$path.absent" ]]; then
+    # The distro had no such file; omarchy-settings created it.
+    rm -f "$path"
+  fi
+done < "$SAVE/paths"

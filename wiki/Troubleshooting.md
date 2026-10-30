@@ -38,6 +38,8 @@ omarchy restart shell             # bar issues
 | `configerrors` noise | Lua syntax / bad API call | Fix the printed line; do not ignore it |
 | Arch: `omarchy` not found | PATH / environment.d | Run the setup script; re-login; `export PATH="/usr/share/omarchy/bin:$PATH"` |
 | Arch: pacman wants Limine | Dependency resolution | Use the setup script; it passes `--assume-installed limine` and friends |
+| Arch/CachyOS: `omarchy-keyring … is unknown trust` | Key not trusted before the keyring package | Use the current setup script (it trusts key `40DFB630…F0134EE680CAC571` first). Details: [Arch Linux](Arch-Linux#arch-specific-troubleshooting) |
+| CachyOS: `conflicting files … owned by cachyos-alacritty-config` | `omarchy-settings` ships the same `/etc/skel` file | Current setup script asks to remove that package; see [Safeguards](Arch-Linux#safeguards-for-arch-endeavouros-and-cachyos) |
 | Network widget vanished | Wrong id in `shell.json` | Use `mahmoud.network` or re-enable `omarchy.network` |
 | Theme didn't change Alacritty colors | Import path broken | Keep `general.import` of the current theme in `alacritty.toml` |
 
