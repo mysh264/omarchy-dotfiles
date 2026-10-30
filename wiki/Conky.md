@@ -25,7 +25,9 @@ git clone https://github.com/mysh264/lean-conky-config.git ~/.config/conky
 cp ~/.config/conky/local.conf.wayland.example ~/.config/conky/local.conf
 ```
 
-`--with-conky` does the clone and the copy, and skips the clone if `~/.config/conky` already exists.
+`--with-conky` installs the `conky` package if it is missing, then does the clone and the copy. It skips the clone if `~/.config/conky` already exists; update an existing clone with `git -C ~/.config/conky pull`.
+
+The config repo does **not** contain Conky itself. Without the `conky` package, `start-lcc.sh` stops with `ERROR: Conky is not installed.` and the install command (older copies of the script instead printed `cp: cannot stat '/usr/bin/conky'` and a Python traceback).
 
 ## Autostart
 
@@ -89,4 +91,5 @@ Level 0 is the background (Omarchy's wallpaper, `omarchy-background`), level 1 i
 
 - If the panel is taller than the screen, shorten the `lcc.panel` list.  
 - Rows that fetch web data (such as the external IP) use `curl`.  
-- `start-lcc.sh` copies `/usr/bin/conky` to `~/.config/conky/conky-wayland` and patches one byte pattern, because Conky 1.25's Wayland `set_font` aborts when the font list is still empty. That is why the process shows up as `conky-wayland`. A newer system `conky` replaces the copy on the next start; if the pattern is not found, the script stops with an error saying so.  
+- **Why the process is called `conky-wayland`:** Conky's Wayland output calls `set_font()` once before the fonts are loaded, and an `assert` there aborts distro builds (they keep asserts on). `start-lcc.sh` runs `tools/patch-conky-wayland`, which copies `/usr/bin/conky` to `~/.config/conky/conky-wayland` and turns that one assert into a plain return (4 bytes). It finds the code by its shape, anchored on the binary's import of `pango_layout_set_font_description`, so it works on Arch's build, **CachyOS's x86-64-v3/v4 rebuilds** (where an older fixed-byte patch found nothing), and later versions with the same code. `conky-wayland.source` records the system binary's path and checksum; any Conky update re-patches on the next start. If a build does not match, nothing is patched, a warning is printed, and the system `conky` runs as is.
+- Check the fix by hand: `python3 ~/.config/conky/tools/patch-conky-wayland /usr/bin/conky /tmp/conky-test` prints the file offset it patched, or why it refused.  

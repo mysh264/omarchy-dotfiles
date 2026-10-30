@@ -243,6 +243,11 @@ fi
 
 if [[ "$WITH_CONKY" -eq 1 ]]; then
   echo "==> Lean Conky Config"
+  # The config only drives Conky; the program itself comes from your distro.
+  # Without it start-lcc.sh stops with "Conky is not installed".
+  if ! command -v conky >/dev/null 2>&1; then
+    run sudo pacman -S --needed --noconfirm conky
+  fi
   if [[ -e "$HOME/.config/conky" ]]; then
     echo "    ~/.config/conky already exists — skipping clone"
   else
