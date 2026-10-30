@@ -43,7 +43,7 @@ The script:
 5. Installs **Omarchy's full base package list** (`/usr/share/omarchy/install/omarchy-base.packages`, ~145 packages: terminal, Nautilus, fonts, bluetooth, audio, portals, Chromium, …). The `omarchy` package alone is only the shell, scripts and defaults; Omarchy OS installs the rest from its ISO, and without it most keys and menu entries do nothing. Boot packages (`plymouth`, Limine, Snapper, `kernel-modules-hook`) are skipped. pacman runs **without** `--noconfirm` here, so you answer any remaining prompt yourself. Packages on that list that conflict with something already installed are **skipped**, keeping your distro's version (CachyOS: `tealdeer` stays, because `cachyos-fish-config` needs it, and Omarchy's `tldr` is skipped; both give the `tldr` command). When pacman asks which repository to take a package from (`cachyos-extra-v4` or `extra`), press Enter: same package, CachyOS's build
 6. Installs the Arch packages this rice expects (`hyprpm` plus `base-devel cmake meson cpio pkgconf git` to build hy3, `grim`, `slurp`, `wl-clipboard`, `jq`, `kitty`, `konsole`, `dolphin`, …), and tries `brave-bin`, `firefox`, `viewnior`, `gwenview` as optional
 7. Writes `OMARCHY_PATH` + `PATH` into `~/.config/environment.d/`, `~/.bashrc`, and for fish `~/.config/fish/conf.d/omarchy-dotfiles.fish`
-8. Copies Omarchy's default user configs from `/etc/skel` into your home, **missing files only** (`cp -rn`). Omarchy OS does this when it creates the user; an existing user on another distro never got it
+8. Copies Omarchy's default user configs from `/etc/skel` into your home, **missing files only** (`cp -r --update=none`). Omarchy OS does this when it creates the user; an existing user on another distro never got it
 
 Then:
 

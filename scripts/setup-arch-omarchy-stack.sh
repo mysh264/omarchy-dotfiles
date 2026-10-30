@@ -158,7 +158,8 @@ skip_conflicting_base_pkgs() {
     why=""
     # pacman -Q also answers for packages that only *provide* the name
     # (pacman -Q tldr prints tealdeer), so compare the real package name.
-    have=$(pacman -Qq "$pkg" 2>/dev/null | head -1)
+    # `|| true`: not installed is the normal case here, not an error (set -e).
+    have=$(pacman -Qq "$pkg" 2>/dev/null | head -1 || true)
     if [[ -n $have && $have != "$pkg" ]]; then
       why="installed $have already provides it"
     elif [[ -z $have ]]; then
@@ -385,9 +386,11 @@ fi
 # never got that. Copy what is missing; never overwrite a file you have.
 echo "==> Omarchy default user configs from /etc/skel (missing files only)"
 if [[ -d /etc/skel/.config/omarchy ]]; then
-  run cp -rn /etc/skel/. "$HOME"/
+  # --update=none: skip files you already have (cp -n is deprecated and
+  # exited 1 on skips in some coreutils 9.x releases, which set -e would stop).
+  run cp -r --update=none /etc/skel/. "$HOME"/
 elif [[ "$DRY_RUN" -eq 1 ]]; then
-  echo "[dry-run] cp -rn /etc/skel/. ~/"
+  echo "[dry-run] cp -r --update=none /etc/skel/. ~/"
 fi
 
 echo "==> Next steps"
