@@ -153,10 +153,15 @@ skip_conflicting_base_pkgs() {
     done
   done < <(expac -Q '%n\t%H' 2>/dev/null)
 
-  local kept=() pkg why
+  local kept=() pkg why have
   for pkg in "${BASE_PKGS[@]}"; do
     why=""
-    if ! pacman -Q "$pkg" &>/dev/null; then
+    # pacman -Q also answers for packages that only *provide* the name
+    # (pacman -Q tldr prints tealdeer), so compare the real package name.
+    have=$(pacman -Qq "$pkg" 2>/dev/null | head -1)
+    if [[ -n $have && $have != "$pkg" ]]; then
+      why="installed $have already provides it"
+    elif [[ -z $have ]]; then
       if [[ -n ${installed_conflicts[$pkg]:-} ]]; then
         why="installed${installed_conflicts[$pkg]} conflicts with it"
       else
